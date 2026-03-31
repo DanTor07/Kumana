@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
+import { COLORS, commonStyles } from '../styles/theme'
 
 const CURRENCY_PAIRS = [
   { from: 'USD', to: 'COP', fromFlag: '🇺🇸', toFlag: '🇨🇴', current: 4150, step: 50 },
@@ -11,11 +12,9 @@ const CURRENCY_PAIRS = [
 
 const initialAlerts = [
   { id: 1, from: 'USD', to: 'EUR', fromFlag: '🇺🇸', toFlag: '🇪🇺', target: 0.95, current: 0.92, type: 'COMPRAR', active: true },
-  { id: 2, from: 'BTC', to: 'USD', fromFlag: '₿', toFlag: '🇺🇸', target: 65000, current: 62400, type: 'VENDER', active: true },
 ]
 
 export default function RateAlerts() {
-  const navigate = useNavigate()
   const [selectedPair, setSelectedPair] = useState(CURRENCY_PAIRS[0])
   const [targetRate, setTargetRate] = useState(selectedPair.current + selectedPair.step * 3)
   const [alerts, setAlerts] = useState(initialAlerts)
@@ -31,12 +30,8 @@ export default function RateAlerts() {
   const handleCreateAlert = () => {
     const newAlert = {
       id: Date.now(),
-      from: selectedPair.from,
-      to: selectedPair.to,
-      fromFlag: selectedPair.fromFlag,
-      toFlag: selectedPair.toFlag,
+      ...selectedPair,
       target: targetRate,
-      current: selectedPair.current,
       type: targetRate > selectedPair.current ? 'VENDER' : 'COMPRAR',
       active: true,
     }
@@ -45,239 +40,91 @@ export default function RateAlerts() {
     setTimeout(() => setCreated(false), 2000)
   }
 
-  const toggleAlert = (id) => {
-    setAlerts(prev => prev.map(a => a.id === id ? { ...a, active: !a.active } : a))
-  }
-
-  const deleteAlert = (id) => {
-    setAlerts(prev => prev.filter(a => a.id !== id))
-  }
-
   const formatNumber = (n) => {
     if (n >= 1000) return n.toLocaleString('es-CO')
-    return n % 1 === 0 ? n.toString() : n.toFixed(2)
+    return n % 1 === 0 ? n.toString() : n.toFixed(3)
   }
 
   return (
-    <div
-      className="min-h-screen flex flex-col pb-20"
-      style={{ background: '#0f231d' }}
-    >
-      {/* Header */}
-      <header className="px-5 pt-12 pb-4 flex items-center justify-between">
+    <div className="min-h-screen flex flex-col pb-24" style={{ background: COLORS.bg }}>
+      <header style={commonStyles.header}>
         <div>
-          <h1 className="text-2xl font-extrabold text-white">Alertas de Tasas</h1>
-          <div className="flex items-center gap-2 mt-1">
-            <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-            <span className="text-xs text-green-400 font-medium">Mercado en Vivo</span>
-          </div>
+          <h1 className="text-2xl font-black text-white">Alertas</h1>
+          <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mt-1">Sintonizado al mercado</p>
         </div>
-        <button
-          className="w-10 h-10 rounded-xl flex items-center justify-center border-0"
-          style={{ background: '#172d25' }}
-        >
-          <span className="material-symbols-rounded" style={{ color: '#7aa899' }}>tune</span>
+        <button className="w-10 h-10 rounded-xl flex items-center justify-center border-0 bg-white/5">
+           <span className="material-symbols-rounded text-zinc-400">notifications_active</span>
         </button>
       </header>
 
       <main className="flex-1 px-5 overflow-y-auto">
-        {/* Create alert card */}
-        <div
-          className="rounded-3xl p-5 mb-5"
-          style={{ background: '#172d25', border: '1px solid rgba(255,255,255,0.05)' }}
-        >
-          <div className="flex items-center gap-2 mb-4">
-            <span
-              className="material-symbols-rounded"
-              style={{ color: '#00c28b', fontVariationSettings: "'FILL' 1" }}
-            >
-              add_alert
-            </span>
-            <h2 className="text-sm font-bold text-white">Nueva Alerta</h2>
-          </div>
-
-          {/* Pair selector */}
-          <div className="mb-4 relative">
-            <label className="block text-xs uppercase tracking-widest mb-2" style={{ color: '#7aa899' }}>Par de divisas</label>
-            <button
-              onClick={() => setShowPairDropdown(!showPairDropdown)}
-              className="w-full flex items-center gap-3 p-3 rounded-2xl border-0"
-              style={{ background: '#1a3028', border: '1px solid rgba(0,194,139,0.2)' }}
-            >
-              <span className="text-xl">{selectedPair.fromFlag}</span>
-              <span className="font-bold text-white">{selectedPair.from}</span>
-              <span className="material-symbols-rounded text-lg" style={{ color: '#7aa899' }}>arrow_forward</span>
-              <span className="text-xl">{selectedPair.toFlag}</span>
-              <span className="font-bold text-white">{selectedPair.to}</span>
-              <span className="ml-auto material-symbols-rounded text-sm" style={{ color: '#7aa899' }}>expand_more</span>
-            </button>
-
-            {showPairDropdown && (
-              <div
-                className="absolute left-0 right-0 mt-1 rounded-2xl overflow-hidden z-10"
-                style={{ background: '#1a3028', border: '1px solid rgba(0,194,139,0.2)' }}
-              >
-                {CURRENCY_PAIRS.map(pair => (
-                  <button
-                    key={`${pair.from}${pair.to}`}
-                    onClick={() => handlePairSelect(pair)}
-                    className="w-full flex items-center gap-3 px-4 py-3 border-0 bg-transparent hover:bg-white/5 text-left"
-                  >
-                    <span className="text-lg">{pair.fromFlag}</span>
-                    <span className="text-sm font-bold text-white">{pair.from} / {pair.to}</span>
-                    <span className="text-lg">{pair.toFlag}</span>
-                    <span className="ml-auto text-xs" style={{ color: '#7aa899' }}>
-                      Actual: {formatNumber(pair.current)}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Rate input */}
-          <div className="mb-4">
-            <label className="block text-xs uppercase tracking-widest mb-2" style={{ color: '#7aa899' }}>Tasa objetivo</label>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setTargetRate(r => Math.max(0, parseFloat((r - selectedPair.step).toFixed(4))))}
-                className="w-12 h-12 rounded-2xl flex items-center justify-center text-xl font-bold border-0"
-                style={{ background: '#1a3028', color: '#00c28b' }}
-              >
-                −
+        {/* Create Alert */}
+        <div style={commonStyles.card} className="mb-6">
+           <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-4">Nueva Alerta de Precio</p>
+           
+           <div className="mb-6 relative">
+              <button onClick={() => setShowPairDropdown(!showPairDropdown)} className="w-full flex items-center gap-4 p-4 rounded-2xl border-0 bg-white/5 text-left">
+                 <span className="text-2xl">{selectedPair.fromFlag} / {selectedPair.toFlag}</span>
+                 <span className="font-bold text-white flex-1">{selectedPair.from} para {selectedPair.to}</span>
+                 <span className="material-symbols-rounded text-zinc-600">expand_more</span>
               </button>
-              <div className="flex-1 text-center">
-                <div className="text-3xl font-extrabold text-white tabular-nums">
-                  {formatNumber(targetRate)}
-                </div>
-                <div className="text-xs mt-1" style={{ color: '#7aa899' }}>
-                  Actual: {formatNumber(selectedPair.current)}{' '}
-                  <span style={{ color: '#00c28b' }}>
-                    {targetRate > selectedPair.current ? '↑ +1.2%' : '↓ -0.5%'}
-                  </span>
-                </div>
-              </div>
-              <button
-                onClick={() => setTargetRate(r => parseFloat((r + selectedPair.step).toFixed(4)))}
-                className="w-12 h-12 rounded-2xl flex items-center justify-center text-xl font-bold border-0"
-                style={{ background: '#1a3028', color: '#00c28b' }}
-              >
-                +
-              </button>
-            </div>
-          </div>
 
-          <button
-            onClick={handleCreateAlert}
-            className="w-full py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 border-0 transition-all"
-            style={{
-              background: created ? 'rgba(0,194,139,0.2)' : 'linear-gradient(135deg, #00c28b, #06f9b4)',
-              color: created ? '#00c28b' : '#0a1f18',
-            }}
-          >
-            <span
-              className="material-symbols-rounded"
-              style={{ fontVariationSettings: "'FILL' 1" }}
-            >
-              {created ? 'check_circle' : 'notifications_active'}
-            </span>
-            {created ? 'Alerta creada' : 'Crear Alerta'}
-          </button>
+              {showPairDropdown && (
+                <div className="absolute left-0 right-0 mt-2 rounded-2xl bg-zinc-900 border border-white/10 z-20 shadow-2xl overflow-hidden">
+                   {CURRENCY_PAIRS.map(p => (
+                     <button key={`${p.from}${p.to}`} onClick={() => handlePairSelect(p)} className="flex items-center gap-4 w-full p-4 border-0 bg-transparent hover:bg-white/5 text-left border-b border-white/5 last:border-0">
+                        <span className="text-xl">{p.fromFlag} {p.toFlag}</span>
+                        <p className="text-sm font-bold text-white flex-1">{p.from} / {p.to}</p>
+                        <p className="text-xs font-bold text-zinc-500">{formatNumber(p.current)}</p>
+                     </button>
+                   ))}
+                </div>
+              )}
+           </div>
+
+           <div className="mb-8">
+              <div className="flex items-center justify-between mb-4">
+                 <button onClick={() => setTargetRate(r => r - selectedPair.step)} className="w-12 h-12 rounded-xl bg-white/5 border-0 text-emerald-500 font-black text-xl">-</button>
+                 <div className="text-center">
+                    <p className="text-3xl font-black text-white tabular-nums">{formatNumber(targetRate)}</p>
+                    <p className="text-[10px] font-bold text-zinc-600 mt-1 uppercase">Tasa Objetivo</p>
+                 </div>
+                 <button onClick={() => setTargetRate(r => r + selectedPair.step)} className="w-12 h-12 rounded-xl bg-white/5 border-0 text-emerald-500 font-black text-xl">+</button>
+              </div>
+           </div>
+
+           <button 
+             onClick={handleCreateAlert}
+             className="w-full py-4 rounded-xl font-black border-0 transition-all flex items-center justify-center gap-2"
+             style={{ background: created ? COLORS.success : COLORS.primary, color: COLORS.primaryDark }}
+           >
+             <span className="material-symbols-rounded text-base">{created ? 'check' : 'add_alert'}</span>
+             {created ? '¡Alerta Activada!' : 'Activar Notificación'}
+           </button>
         </div>
 
-        {/* Active alerts */}
-        <div>
-          <div className="flex items-center justify-between mb-3 px-1">
-            <h2 className="text-sm font-bold text-white">
-              Alertas Activas{' '}
-              <span
-                className="text-xs px-2 py-0.5 rounded-full ml-1"
-                style={{ background: 'rgba(0,194,139,0.15)', color: '#00c28b' }}
-              >
-                {alerts.filter(a => a.active).length}
-              </span>
-            </h2>
-          </div>
-
-          <div className="flex flex-col gap-3">
-            {alerts.length === 0 ? (
-              <div className="text-center py-8" style={{ color: '#5a8a78' }}>
-                <span className="material-symbols-rounded text-4xl block mb-2">notifications_off</span>
-                <p className="text-sm">No tienes alertas activas</p>
-              </div>
-            ) : alerts.map(alert => (
-              <div
-                key={alert.id}
-                className="rounded-3xl p-4"
-                style={{ background: '#172d25', border: '1px solid rgba(255,255,255,0.05)' }}
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">{alert.fromFlag}</span>
-                    <span className="font-bold text-sm text-white">{alert.from}</span>
-                    <span className="material-symbols-rounded text-sm" style={{ color: '#7aa899' }}>arrow_forward</span>
-                    <span className="text-lg">{alert.toFlag}</span>
-                    <span className="font-bold text-sm text-white">{alert.to}</span>
-                    <span
-                      className="text-xs font-bold px-2 py-0.5 rounded-full ml-1"
-                      style={{
-                        background: alert.type === 'COMPRAR' ? 'rgba(0,194,139,0.15)' : 'rgba(239,68,68,0.15)',
-                        color: alert.type === 'COMPRAR' ? '#00c28b' : '#ef4444',
-                      }}
-                    >
-                      {alert.type}
-                    </span>
-                  </div>
-
-                  {/* Toggle */}
-                  <button
-                    onClick={() => toggleAlert(alert.id)}
-                    className="relative w-12 h-6 rounded-full border-0 transition-all"
-                    style={{ background: alert.active ? '#00c28b' : '#1a3028' }}
-                  >
-                    <span
-                      className="absolute top-1 w-4 h-4 rounded-full bg-white transition-all"
-                      style={{ left: alert.active ? '26px' : '4px' }}
-                    />
-                  </button>
+        {/* Alerts List */}
+        <h2 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-4 ml-1">Monitoreo Activo</h2>
+        {alerts.map(a => (
+          <div key={a.id} className="p-5 rounded-2xl bg-white/5 border border-white/5 mb-3">
+             <div className="flex justify-between items-start mb-4">
+                <div className="flex items-center gap-3">
+                   <p className="font-black text-white">{a.from}/{a.to}</p>
+                   <span className={`px-2 py-0.5 rounded text-[10px] font-black ${a.type === 'COMPRAR' ? 'bg-emerald-500/20 text-emerald-500' : 'bg-red-500/20 text-red-500'}`}>{a.type}</span>
                 </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs" style={{ color: '#7aa899' }}>Objetivo</p>
-                    <p className="text-lg font-extrabold text-white">{formatNumber(alert.target)}</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs" style={{ color: '#7aa899' }}>Progreso</p>
-                    <div
-                      className="w-20 h-1.5 rounded-full mt-1 overflow-hidden"
-                      style={{ background: '#1a3028' }}
-                    >
-                      <div
-                        className="h-full rounded-full"
-                        style={{
-                          width: `${Math.min(100, (alert.current / alert.target) * 100)}%`,
-                          background: 'linear-gradient(90deg, #00c28b, #06f9b4)',
-                        }}
-                      />
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs" style={{ color: '#7aa899' }}>Actual</p>
-                    <p className="text-sm font-bold" style={{ color: '#00c28b' }}>{formatNumber(alert.current)}</p>
-                  </div>
-                  <button
-                    onClick={() => deleteAlert(alert.id)}
-                    className="w-8 h-8 rounded-xl flex items-center justify-center border-0"
-                    style={{ background: 'rgba(239,68,68,0.1)' }}
-                  >
-                    <span className="material-symbols-rounded text-base" style={{ color: '#ef4444' }}>delete</span>
-                  </button>
+                <div className={`w-10 h-5 rounded-full p-1 transition-colors ${a.active ? 'bg-emerald-500' : 'bg-zinc-700'}`} onClick={() => setAlerts(prev => prev.map(al => al.id === a.id ? {...al, active: !al.active} : al))}>
+                   <div className={`w-3 h-3 rounded-full bg-white transition-transform ${a.active ? 'translate-x-5' : 'translate-x-0'}`} />
                 </div>
-              </div>
-            ))}
+             </div>
+             <div className="flex items-end justify-between">
+                <div>
+                   <p className="text-[10px] font-bold text-zinc-600 uppercase">Avisar en</p>
+                   <p className="text-xl font-black text-white">{formatNumber(a.target)}</p>
+                </div>
+                <p className="text-xs font-bold text-zinc-500 pb-1">Actual: {formatNumber(a.current)}</p>
+             </div>
           </div>
-        </div>
+        ))}
       </main>
 
       <BottomNav active="Alerta" />

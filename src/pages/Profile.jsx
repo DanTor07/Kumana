@@ -1,13 +1,17 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
-import { useFinance, CURRENCIES } from '../context/FinanceContext'
+import { useAuth } from '../hooks/useAuth'
+import { useFinanceManager } from '../hooks/useFinanceManager'
+import ChartPicker from '../components/ChartPicker'
+import { COLORS, commonStyles } from '../styles/theme'
 
 const ID_TYPES = { CC: 'Cédula de Ciudadanía', CE: 'Cédula de Extranjería', PA: 'Pasaporte', NIT: 'NIT' }
 
 export default function Profile() {
   const navigate = useNavigate()
-  const { user, updateUser, baseCurrency, setBaseCurrency } = useFinance()
+  const { user, saveProfile } = useAuth()
+  const { baseCurrency, setBaseCurrency, CURRENCIES } = useFinanceManager()
 
   const [editingEmail, setEditingEmail] = useState(false)
   const [editingPhone, setEditingPhone] = useState(false)
@@ -26,276 +30,121 @@ export default function Profile() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col pb-24" style={{ background: '#10221d' }}>
+    <div className="min-h-screen flex flex-col pb-24" style={{ background: COLORS.bg }}>
 
-      {/* Logout confirmation — full-screen backdrop */}
+      {/* Logout Modal */}
       {showLogout && (
-        <div
-          className="fixed inset-0 z-50 flex items-end"
-          style={{ background: 'rgba(0,0,0,0.75)' }}
-          onClick={() => setShowLogout(false)}
-        >
-          <div
-            className="w-full p-6 rounded-t-3xl"
-            style={{ background: '#1a3028' }}
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="w-10 h-1 rounded-full mx-auto mb-5" style={{ background: '#2a4a3a' }} />
-            <h3 className="text-lg font-extrabold text-white text-center mb-2">¿Cerrar sesión?</h3>
-            <p className="text-sm text-center mb-6" style={{ color: '#7aa899' }}>
-              Tendrás que iniciar sesión de nuevo para acceder.
-            </p>
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/80" onClick={() => setShowLogout(false)}>
+          <div className="w-full max-w-[430px] p-8 rounded-t-[32px]" style={{ background: COLORS.card }} onClick={e => e.stopPropagation()}>
+            <div className="w-12 h-1.5 rounded-full mx-auto mb-6 bg-white/10" />
+            <h3 className="text-xl font-black text-white text-center mb-2">¿Cerrar sesión?</h3>
+            <p className="text-sm text-center mb-8 text-zinc-500">Tendrás que volver a autenticarte para ver tu balance.</p>
             <div className="flex gap-3">
-              <button
-                onClick={() => setShowLogout(false)}
-                className="flex-1 py-3 rounded-2xl font-semibold text-sm border-0"
-                style={{ background: '#243f35', color: '#7aa899' }}
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleLogout}
-                className="flex-1 py-3 rounded-2xl font-bold text-sm border-0"
-                style={{ background: '#ef4444', color: 'white' }}
-              >
-                Cerrar sesión
-              </button>
+              <button onClick={() => setShowLogout(false)} className="flex-1 py-4 rounded-xl font-bold border-0 bg-white/5 text-zinc-400">Cancelar</button>
+              <button onClick={handleLogout} className="flex-1 py-4 rounded-xl font-black border-0 bg-red-500 text-white">Cerrar sesión</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Base currency picker */}
+      {/* Currency Picker */}
       {showCurrencyPicker && (
-        <div
-          className="fixed inset-0 z-50 flex items-end"
-          style={{ background: 'rgba(0,0,0,0.75)' }}
-          onClick={() => setShowCurrencyPicker(false)}
-        >
-          <div
-            className="w-full rounded-t-3xl"
-            style={{ background: '#1a3028', maxHeight: '70vh', overflowY: 'auto' }}
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="w-10 h-1 rounded-full mx-auto mt-3 mb-4" style={{ background: '#2a4a3a' }} />
-            <p className="text-center text-sm font-bold text-white mb-3 px-5">Moneda base del portafolio</p>
-            <div className="px-4 pb-6">
-              {Object.values(CURRENCIES).map(c => (
-                <button
-                  key={c.code}
-                  onClick={() => { setBaseCurrency(c.code); setShowCurrencyPicker(false) }}
-                  className="w-full flex items-center gap-3 px-3 py-3 rounded-2xl mb-1 border-0 text-left"
-                  style={{
-                    background: baseCurrency === c.code ? 'rgba(0,194,139,0.12)' : 'transparent',
-                    border: baseCurrency === c.code ? '1px solid rgba(0,194,139,0.3)' : '1px solid transparent',
-                  }}
-                >
-                  <span className="text-xl">{c.flag}</span>
-                  <span className="flex-1 text-sm font-bold text-white">{c.code} — {c.name}</span>
-                  {baseCurrency === c.code && (
-                    <span className="material-symbols-rounded" style={{ color: '#00c28b', fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
+        <ChartPicker value={baseCurrency} onChange={setBaseCurrency} onClose={() => setShowCurrencyPicker(false)} />
       )}
 
-      {/* Header */}
-      <header className="px-5 pt-12 pb-4 flex items-center gap-3">
-        <button
-          onClick={() => navigate('/dashboard')}
-          className="w-10 h-10 rounded-xl flex items-center justify-center border-0"
-          style={{ background: '#1a3028' }}
-        >
-          <span className="material-symbols-rounded" style={{ color: '#7aa899' }}>arrow_back</span>
+      <header style={commonStyles.header}>
+        <button onClick={() => navigate('/dashboard')} className="w-10 h-10 rounded-xl flex items-center justify-center border-0 bg-white/5">
+          <span className="material-symbols-rounded text-zinc-400">arrow_back</span>
         </button>
-        <h1 className="text-xl font-extrabold text-white">Perfil</h1>
+        <h1 className="text-lg font-black text-white">Mi Perfil</h1>
+        <div className="w-10" />
       </header>
 
       <main className="flex-1 px-5 overflow-y-auto">
-        {/* Avatar + name */}
-        <div
-          className="rounded-3xl p-6 mb-5 flex flex-col items-center text-center"
-          style={{ background: '#172d25', border: '1px solid rgba(255,255,255,0.05)' }}
-        >
+        {/* Profile Card */}
+        <div style={commonStyles.card} className="mb-6 flex flex-col items-center">
           <div className="relative mb-4">
             {user.avatar ? (
-              <img
-                src={user.avatar}
-                alt="avatar"
-                className="w-20 h-20 rounded-full object-cover"
-              />
+              <img src={user.avatar} alt="avatar" className="w-24 h-24 rounded-full object-cover border-4 border-emerald-500/20" />
             ) : (
-              <div
-                className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-extrabold"
-                style={{ background: 'linear-gradient(135deg, #00c28b, #06f9b4)', color: '#0a1f18' }}
-              >
+              <div className="w-24 h-24 rounded-full flex items-center justify-center text-3xl font-black" style={{ background: `linear-gradient(135deg, ${COLORS.primary}, ${COLORS.primaryLight})`, color: COLORS.primaryDark }}>
                 {initials}
               </div>
             )}
-            <label
-              className="absolute bottom-0 right-0 w-7 h-7 rounded-full flex items-center justify-center cursor-pointer"
-              style={{ background: '#00c28b', border: '2px solid #172d25' }}
-            >
-              <span className="material-symbols-rounded text-sm" style={{ color: '#0a1f18', fontVariationSettings: "'FILL' 1" }}>edit</span>
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={e => {
+            <label className="absolute bottom-0 right-0 w-8 h-8 rounded-full flex items-center justify-center cursor-pointer bg-emerald-500 border-2 border-[#172d25]">
+               <span className="material-symbols-rounded text-sm text-black font-black">edit</span>
+               <input type="file" accept="image/*" className="hidden" onChange={e => {
                   const file = e.target.files[0]
-                  if (!file) return
-                  const reader = new FileReader()
-                  reader.onload = ev => updateUser({ avatar: ev.target.result })
-                  reader.readAsDataURL(file)
-                }}
-              />
+                  if (file) {
+                    const reader = new FileReader()
+                    reader.onload = ev => saveProfile({ avatar: ev.target.result })
+                    reader.readAsDataURL(file)
+                  }
+               }}/>
             </label>
           </div>
-
-          <h2 className="text-xl font-extrabold text-white mb-1">{user.name || 'Sin nombre'}</h2>
-          {user.username && (
-            <p className="text-sm mb-2" style={{ color: '#7aa899' }}>@{user.username}</p>
-          )}
-          <div className="flex items-center gap-2 flex-wrap justify-center">
-            <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium" style={{ background: 'rgba(0,194,139,0.15)', color: '#00c28b' }}>
-              <span className="material-symbols-rounded text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
-              Verificado
-            </div>
-            <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold" style={{ background: 'rgba(255,193,7,0.15)', color: '#ffc107' }}>
-              <span className="material-symbols-rounded text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>workspace_premium</span>
-              Miembro Pro
-            </div>
+          <h2 className="text-xl font-black text-white">{user.name || 'Usuario Kumana'}</h2>
+          <p className="text-sm font-bold text-zinc-500 mb-4">@{user.username || 'sin_usuario'}</p>
+          <div className="flex gap-2">
+             <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-[10px] font-black text-emerald-500 uppercase border border-emerald-500/20">Verificado</span>
+             <span className="px-3 py-1 rounded-full bg-amber-500/10 text-[10px] font-black text-amber-500 uppercase border border-amber-500/20">Nivel Pro</span>
           </div>
-          {user.memberSince && (
-            <p className="text-xs mt-2" style={{ color: '#5a8a78' }}>Miembro desde {user.memberSince}</p>
-          )}
         </div>
 
-        {/* Personal info */}
-        <div className="rounded-3xl p-5 mb-5" style={{ background: '#172d25', border: '1px solid rgba(255,255,255,0.05)' }}>
-          <h3 className="text-xs font-semibold uppercase tracking-widest mb-4" style={{ color: '#7aa899' }}>Información Personal</h3>
-
-          {/* Email */}
-          <div className="py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-            {editingEmail ? (
-              <div className="flex flex-col gap-2">
-                <label className="text-xs" style={{ color: '#7aa899' }}>Correo electrónico</label>
-                <div className="flex items-center gap-2 px-3 rounded-xl" style={{ background: '#1a3028', border: '1px solid #00c28b' }}>
-                  <span className="material-symbols-rounded text-lg" style={{ color: '#00c28b' }}>mail</span>
-                  <input value={tempEmail} onChange={e => setTempEmail(e.target.value)} autoFocus className="flex-1 bg-transparent py-3 text-white text-sm outline-none" />
-                </div>
-                <div className="flex gap-2">
-                  <button onClick={() => { setEditingEmail(false); setTempEmail(user.email) }} className="flex-1 py-2 rounded-xl text-sm border-0" style={{ background: '#1a3028', color: '#7aa899' }}>Cancelar</button>
-                  <button onClick={() => { updateUser({ email: tempEmail }); setEditingEmail(false) }} className="flex-1 py-2 rounded-xl text-sm font-bold border-0" style={{ background: '#00c28b', color: '#0a1f18' }}>Guardar</button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(0,194,139,0.08)' }}>
-                  <span className="material-symbols-rounded text-lg" style={{ color: '#00c28b' }}>mail</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs mb-0.5" style={{ color: '#7aa899' }}>Correo</p>
-                  <p className="text-sm font-medium text-white truncate">{user.email || '—'}</p>
-                </div>
-                <button onClick={() => setEditingEmail(true)} className="w-8 h-8 rounded-lg flex items-center justify-center border-0" style={{ background: '#1a3028' }}>
-                  <span className="material-symbols-rounded text-sm" style={{ color: '#7aa899' }}>edit</span>
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Phone */}
-          <div className="py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-            {editingPhone ? (
-              <div className="flex flex-col gap-2">
-                <label className="text-xs" style={{ color: '#7aa899' }}>Teléfono</label>
-                <div className="flex items-center gap-2 px-3 rounded-xl" style={{ background: '#1a3028', border: '1px solid #00c28b' }}>
-                  <span className="material-symbols-rounded text-lg" style={{ color: '#00c28b' }}>phone</span>
-                  <input value={tempPhone} onChange={e => setTempPhone(e.target.value)} autoFocus className="flex-1 bg-transparent py-3 text-white text-sm outline-none" />
-                </div>
-                <div className="flex gap-2">
-                  <button onClick={() => { setEditingPhone(false); setTempPhone(user.phone) }} className="flex-1 py-2 rounded-xl text-sm border-0" style={{ background: '#1a3028', color: '#7aa899' }}>Cancelar</button>
-                  <button onClick={() => { updateUser({ phone: tempPhone }); setEditingPhone(false) }} className="flex-1 py-2 rounded-xl text-sm font-bold border-0" style={{ background: '#00c28b', color: '#0a1f18' }}>Guardar</button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(0,194,139,0.08)' }}>
-                  <span className="material-symbols-rounded text-lg" style={{ color: '#00c28b' }}>phone</span>
-                </div>
-                <div className="flex-1">
-                  <p className="text-xs mb-0.5" style={{ color: '#7aa899' }}>Teléfono</p>
-                  <p className="text-sm font-medium text-white">{user.phone || '—'}</p>
-                </div>
-                <button onClick={() => setEditingPhone(true)} className="w-8 h-8 rounded-lg flex items-center justify-center border-0" style={{ background: '#1a3028' }}>
-                  <span className="material-symbols-rounded text-sm" style={{ color: '#7aa899' }}>edit</span>
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* ID */}
-          <div className="py-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(0,194,139,0.08)' }}>
-                <span className="material-symbols-rounded text-lg" style={{ color: '#00c28b' }}>badge</span>
+        {/* Info Section */}
+        <div style={commonStyles.card} className="mb-6">
+           <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-4">Información de Cuenta</p>
+           
+           <div className="flex items-center gap-4 py-3 border-b border-white/5">
+              <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center">
+                 <span className="material-symbols-rounded text-zinc-400">mail</span>
               </div>
               <div className="flex-1">
-                <p className="text-xs mb-0.5" style={{ color: '#7aa899' }}>{ID_TYPES[user.idType] || 'Identificación'}</p>
-                <p className="text-sm font-medium text-white">{user.cedula || '—'}</p>
+                 <p className="text-[10px] font-bold text-zinc-600 uppercase">Email</p>
+                 <p className="text-sm font-bold text-white">{user.email || 'No asignado'}</p>
               </div>
-            </div>
-          </div>
+           </div>
+
+           <div className="flex items-center gap-4 py-3 border-b border-white/5">
+              <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center">
+                 <span className="material-symbols-rounded text-zinc-400">phone</span>
+              </div>
+              <div className="flex-1">
+                 <p className="text-[10px] font-bold text-zinc-600 uppercase">Teléfono</p>
+                 <p className="text-sm font-bold text-white">{user.phone || 'No asignado'}</p>
+              </div>
+           </div>
+
+           <div className="flex items-center gap-4 py-3">
+              <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center">
+                 <span className="material-symbols-rounded text-zinc-400">badge</span>
+              </div>
+              <div className="flex-1">
+                 <p className="text-[10px] font-bold text-zinc-600 uppercase">{user.idType || 'ID'}</p>
+                 <p className="text-sm font-bold text-white">{user.cedula || 'No verificada'}</p>
+              </div>
+           </div>
         </div>
 
-        {/* Settings */}
-        <div className="rounded-3xl p-5 mb-5" style={{ background: '#172d25', border: '1px solid rgba(255,255,255,0.05)' }}>
-          <h3 className="text-xs font-semibold uppercase tracking-widest mb-4" style={{ color: '#7aa899' }}>Configuración</h3>
-
-          {/* Base currency */}
-          <button
-            onClick={() => setShowCurrencyPicker(true)}
-            className="w-full flex items-center gap-3 py-3 border-0 bg-transparent text-left"
-            style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
-          >
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(0,194,139,0.08)' }}>
-              <span className="material-symbols-rounded text-lg" style={{ color: '#00c28b' }}>account_balance_wallet</span>
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-white">Moneda base del portafolio</p>
-              <p className="text-xs" style={{ color: '#7aa899' }}>
-                {CURRENCIES[baseCurrency]?.flag} {baseCurrency} — {CURRENCIES[baseCurrency]?.name}
-              </p>
-            </div>
-            <span className="material-symbols-rounded text-lg" style={{ color: '#5a8a78' }}>chevron_right</span>
-          </button>
-
-          {[
-            { icon: 'help', label: 'Ayuda y Soporte' },
-            { icon: 'security', label: 'Seguridad' },
-          ].map((item, i) => (
-            <button key={item.label} className="w-full flex items-center gap-3 py-3 border-0 bg-transparent text-left" style={{ borderTop: i > 0 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(0,194,139,0.08)' }}>
-                <span className="material-symbols-rounded text-lg" style={{ color: '#00c28b' }}>{item.icon}</span>
+        {/* Preferences */}
+        <div style={commonStyles.card} className="mb-6">
+           <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-4">Preferencias</p>
+           
+           <button onClick={() => setShowCurrencyPicker(true)} className="w-full flex items-center gap-4 py-3 border-0 bg-transparent text-left group">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center group-active:scale-90 transition-transform">
+                 <span className="material-symbols-rounded text-emerald-500">payments</span>
               </div>
-              <span className="flex-1 text-sm font-medium text-white">{item.label}</span>
-              <span className="material-symbols-rounded text-lg" style={{ color: '#5a8a78' }}>chevron_right</span>
-            </button>
-          ))}
+              <div className="flex-1">
+                 <p className="text-sm font-bold text-white text-zinc-300">Moneda Base</p>
+                 <p className="text-xs font-bold text-zinc-500">{CURRENCIES[baseCurrency]?.flag} {baseCurrency} — {CURRENCIES[baseCurrency]?.name}</p>
+              </div>
+              <span className="material-symbols-rounded text-zinc-700">chevron_right</span>
+           </button>
         </div>
 
-        {/* Logout */}
-        <button
-          onClick={() => setShowLogout(true)}
-          className="w-full py-4 rounded-3xl font-bold text-base flex items-center justify-center gap-2 mb-5 border-0"
-          style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.25)' }}
-        >
-          <span className="material-symbols-rounded" style={{ fontVariationSettings: "'FILL' 1" }}>logout</span>
-          Cerrar sesión
+        {/* Logout CTA */}
+        <button onClick={() => setShowLogout(true)} className="w-full py-5 rounded-2xl font-black text-red-500 bg-red-500/10 border border-red-500/20 mb-8 active:scale-95 transition-all">
+           Cerrar Sesión Activa
         </button>
       </main>
 
