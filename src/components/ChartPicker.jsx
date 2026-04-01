@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { CURRENCIES } from '../context/FinanceContext'
+import { CURRENCIES } from '../constants/currencies'
 import { COLORS } from '../styles/theme'
 
 export default function ChartPicker({ value, exclude, onChange, onClose }) {

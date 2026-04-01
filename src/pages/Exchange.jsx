@@ -1,85 +1,10 @@
 import { useState, useCallback } from 'react'
 import BottomNav from '../components/BottomNav'
-import { formatAmount } from '../context/FinanceContext'
+import { formatAmount, CURRENCIES } from '../constants/currencies'
 import { useFinanceManager } from '../hooks/useFinanceManager'
 import ChartPicker from '../components/ChartPicker'
 import { COLORS, commonStyles } from '../styles/theme'
 
-const GEMINI_KEY = import.meta.env.VITE_GEMINI_KEY
-const GEMINI_MODELS = [
-  'gemini-2.5-flash-preview-04-17',
-  'gemini-2.5-flash',
-  'gemini-2.5-flash-preview',
-  'gemma-3-27b-it',
-  'gemma-3-12b-it',
-  'gemini-2.0-flash',
-  'gemini-1.5-flash',
-]
-
-async function callGemini(prompt) {
-  let lastError = null
-  for (const model of GEMINI_MODELS) {
-    try {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_KEY}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.4, responseMimeType: 'application/json' },
-          }),
-        }
-      )
-      if (res.status === 429) {
-        lastError = 'Límite de solicitudes alcanzado. Intenta luego. (429)'
-        continue
-      }
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}))
-        lastError = errJson?.error?.message || `Error ${res.status}`
-        continue
-      }
-      const json = await res.json()
-      const text = json.candidates?.[0]?.content?.parts?.[0]?.text
-      if (!text) { lastError = 'Respuesta vacía de Gemini'; continue }
-      return JSON.parse(text)
-    } catch (e) {
-      lastError = e.message
-      continue
-    }
-  }
-  throw new Error(lastError || 'Todos los modelos fallaron')
-}
-
-function buildPrompt({ wallet, investments, baseCurrency, rates, currencies }) {
-  const today = new Date().toLocaleDateString('es-CO', { dateStyle: 'long' })
-  const walletLines = Object.entries(wallet)
-    .filter(([, v]) => v > 0)
-    .map(([cur, amt]) => {
-      const rate = rates[baseCurrency] && rates[cur] ? rates[baseCurrency] / rates[cur] : null
-      return `  ${cur}: ${formatAmount(amt, cur)}${rate ? ` (≈ ${formatAmount(amt * rate, baseCurrency)} ${baseCurrency})` : ''}`
-    }).join('\n') || '  Sin fondos'
-
-  const historyLines = investments.slice(0, 5)
-    .map(inv => `  ${inv.fromCurrency}→${inv.toCurrency} | ${inv.fromAmount} → ${inv.toAmount}`)
-    .join('\n') || '  Sin historial'
-
-  return `Eres un asesor financiero experto. Analiza este portafolio:
-Moneda base: ${baseCurrency}
-Saldos:
-${walletLines}
-Historial:
-${historyLines}
-Responde SOLO con un JSON:
-{
-  "riesgo_global": "BAJO|MEDIO|ALTO",
-  "resumen": "análisis breve",
-  "top_monedas": [{ "moneda": "USD", "accion": "COMPRAR", "tendencia": "ALCISTA", "motivo": "resumen" }],
-  "analisis_portafolio": "detalle",
-  "consejo_del_dia": "consejo accionable"
-}`
-}
 
 const RISK_COLOR = {
   BAJO: { text: '#22c55e', bg: 'rgba(34,197,94,0.1)' },
@@ -124,6 +49,7 @@ function DepositModal({ onClose, onDeposit, currencies }) {
 export default function Exchange() {
   const {
     wallet, investments, baseCurrency, rates, ratesLoading, ratesError,
+    aiData, aiLoading, aiError, analyzePortfolio,
     getRate, getTotalInBase, handleDeposit, handleExchange, CURRENCIES
   } = useFinanceManager()
 
@@ -136,27 +62,27 @@ export default function Exchange() {
   const [showToPicker, setShowToPicker] = useState(false)
   const [investSuccess, setInvestSuccess] = useState(false)
 
-
-
-  const analyzePortfolio = async () => {
-    setAiLoading(true)
-    setAiError(null)
-    try {
-      const prompt = buildPrompt({ wallet, investments, baseCurrency, rates, currencies: CURRENCIES })
-      const result = await callGemini(prompt)
-      setAiData(result)
-    } catch (e) {
-      setAiError(e.message)
-    } finally {
-      setAiLoading(false)
-    }
-  }
-
   const rate = getRate(fromCur, toCur)
   const fromAmtNum = parseFloat(fromAmount) || 0
   const toAmtNum = rate ? fromAmtNum * rate : 0
   const available = wallet[fromCur] || 0
   const canInvest = fromAmtNum > 0 && fromAmtNum <= available && rate
+
+  const formatRate = (r) => {
+    if (!r) return '0'
+    if (r < 0.0001) return r.toFixed(7)
+    if (r < 0.001)  return r.toFixed(6)
+    if (r < 0.01)   return r.toFixed(5)
+    if (r < 0.1)    return r.toFixed(4)
+    return formatAmount(r, toCur)
+  }
+
+  const getButtonState = () => {
+    if (investSuccess)          return { label: '¡Completado!',          bg: COLORS.success }
+    if (available === 0)        return { label: 'Sin saldo — Deposita primero', bg: COLORS.cardLight }
+    if (fromAmtNum > available) return { label: 'Saldo insuficiente',    bg: '#ef4444' }
+    return { label: 'Confirmar intercambio', bg: COLORS.primary }
+  }
 
   const onConfirmInvest = async () => {
     if (!canInvest) return
@@ -215,7 +141,7 @@ export default function Exchange() {
             </div>
             <div className="flex items-center justify-center gap-2 mb-4">
               <div className="flex-1 h-px bg-white/5" />
-              <span className="text-[10px] font-bold text-zinc-600">1 {fromCur} = {formatAmount(rate || 0, toCur)} {toCur}</span>
+              <span className="text-[10px] font-bold text-zinc-600">1 {fromCur} = {formatRate(rate)} {toCur}</span>
               <div className="flex-1 h-px bg-white/5" />
             </div>
              <div className="flex gap-2 mb-6">
@@ -227,13 +153,21 @@ export default function Exchange() {
                 <span className="font-bold text-emerald-400">{rate && fromAmtNum > 0 ? formatAmount(toAmtNum, toCur) : '0.00'}</span>
               </div>
             </div>
-            <button 
+            {available === 0 && (
+              <p className="text-xs text-center mb-3" style={{ color: COLORS.textMuted }}>
+                No tienes <span className="font-bold text-white">{fromCur}</span> en tu billetera.{' '}
+                <button onClick={() => { setShowInvest(false); setShowDeposit(true) }} className="underline border-0 bg-transparent p-0 cursor-pointer" style={{ color: COLORS.primary }}>
+                  Depositar ahora
+                </button>
+              </p>
+            )}
+            <button
               disabled={!canInvest || investSuccess}
               onClick={onConfirmInvest}
               className="w-full py-4 rounded-xl font-black border-0 transition-all"
-              style={{ background: investSuccess ? COLORS.success : COLORS.primary, color: COLORS.primaryDark, opacity: (!canInvest && !investSuccess) ? 0.4 : 1 }}
+              style={{ background: getButtonState().bg, color: COLORS.primaryDark, opacity: (!canInvest && !investSuccess) ? 0.6 : 1 }}
             >
-              {investSuccess ? '¡Completado!' : 'Confirmar intercambio'}
+              {getButtonState().label}
             </button>
           </div>
         )}

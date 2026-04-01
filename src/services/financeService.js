@@ -16,7 +16,16 @@ export const financeService = {
    * Fetches the latest exchange rates relative to USD.
    */
   getLatestRates: async () => {
-    return await api.get('https://open.er-api.com/v6/latest/USD')
+    try {
+      const data = await api.get('https://open.er-api.com/v6/latest/USD')
+      if (!data || data.result !== 'success') {
+        throw new Error('Invalid response from rates API')
+      }
+      return data
+    } catch (error) {
+      console.error('financeService.getLatestRates failed:', error)
+      throw error
+    }
   },
 
   /**

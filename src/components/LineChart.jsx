@@ -16,7 +16,7 @@ export default function LineChart({ data, isLoading }) {
   const values = data.map(d => d.value)
   const minV = Math.min(...values)
   const maxV = Math.max(...values)
-  const span = maxV - minV || minV * 0.01
+  const span = (maxV - minV) || (minV ? minV * 0.01 : 1)
 
   const px = i => (i / (data.length - 1)) * W
   const py = v => H - 10 - ((v - minV) / span) * (H - 20)
