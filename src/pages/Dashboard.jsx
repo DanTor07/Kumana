@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
-import { formatAmount } from '../context/FinanceContext'
+import { formatAmount, CURRENCIES } from '../constants/currencies'
 import { useFinanceManager } from '../hooks/useFinanceManager'
 import LineChart from '../components/LineChart'
 import ChartPicker from '../components/ChartPicker'
@@ -73,9 +73,6 @@ export default function Dashboard() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button className="w-10 h-10 rounded-xl flex items-center justify-center border-0" style={{ background: COLORS.card }}>
-            <span className="material-symbols-rounded" style={{ color: COLORS.textMuted }}>search</span>
-          </button>
           <button onClick={() => navigate('/alertas')} className="w-10 h-10 rounded-xl flex items-center justify-center border-0 relative" style={{ background: COLORS.card }}>
             <span className="material-symbols-rounded" style={{ color: COLORS.textMuted }}>notifications</span>
             <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-red-500" />
@@ -249,7 +246,7 @@ export default function Dashboard() {
               type="number"
               value={simAmount}
               onChange={e => setSimAmount(e.target.value)}
-              className="flex-1 bg-transparent py-4 text-white text-xl font-black outline-none placeholder:text-zinc-800"
+              className="flex-1 bg-transparent py-4 text-white text-xl font-black outline-none placeholder:text-white/40"
               placeholder="0.00"
             />
           </div>

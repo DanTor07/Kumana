@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { formatAmount } from '../context/FinanceContext'
+import { formatAmount, CURRENCIES } from '../constants/currencies'
 import { useFinanceManager } from '../hooks/useFinanceManager'
 import { COLORS, commonStyles } from '../styles/theme'
 

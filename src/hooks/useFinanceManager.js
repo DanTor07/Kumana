@@ -1,37 +1,50 @@
-import { useState, useEffect, useCallback } from 'react'
-import { useFinance, CURRENCIES } from '../context/FinanceContext'
+import { useState, useCallback } from 'react'
+import { useFinance } from '../context/FinanceContext'
+import { CURRENCIES, formatAmount } from '../constants/currencies'
 import { financeService } from '../services/financeService'
+
+const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY
+const GEMINI_MODELS = [
+  'gemini-2.0-flash',
+  'gemini-1.5-flash',
+  'gemini-2.0-flash-lite-preview-02-05',
+  'gemini-1.5-pro',
+]
 
 /**
  * Controller hook for finance business logic (Model-View coordination).
  */
 
 export function useFinanceManager() {
-  const { 
-    baseCurrency, 
-    rates, 
-    ratesLoading, 
-    ratesError, 
-    getRate, 
-    getTotalInBase, 
-    deposit, 
-    invest, 
-    wallet, 
-    investments 
+  const {
+    user,
+    baseCurrency,
+    setBaseCurrency,
+    rates,
+    ratesLoading,
+    ratesError,
+    getRate,
+    getTotalInBase,
+    deposit,
+    invest,
+    wallet,
+    investments
   } = useFinance()
 
   const [chartData, setChartData] = useState(null)
   const [chartLoading, setChartLoading] = useState(false)
   
-  // Synthetic data as a fallback when API fails or doesn't support a currency
+  const [aiData, setAiData]       = useState(null)
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiError, setAiError]     = useState(null)
+
+  // Synthetic data as a fallback
   const generateSyntheticData = useCallback((currentRate, days, volatility = 0.014) => {
-    // Deterministic seed
     let seed = (currentRate + days) * 9999
     const rand = () => {
       seed = Math.sin(seed) * 10000
       return seed - Math.floor(seed)
     }
-
     const pts = [currentRate]
     for (let i = 0; i < days; i++) {
       pts.push(pts[pts.length - 1] / (1 + (rand() - 0.5) * volatility * 2))
@@ -57,24 +70,84 @@ export function useFinanceManager() {
       if (data) {
         setChartData(data)
       } else {
-        // Fallback for COP, etc.
         setChartData(generateSyntheticData(getRate(from, to) || 1, days))
       }
     } catch (err) {
-      console.error('Error fetching chart data:', err)
       setChartData(generateSyntheticData(getRate(from, to) || 1, days))
     } finally {
       setChartLoading(false)
     }
   }, [getRate, generateSyntheticData])
 
+  const analyzePortfolio = useCallback(async () => {
+    if (!GEMINI_KEY || GEMINI_KEY === 'TEST') {
+      setAiError('Configura VITE_GEMINI_API_KEY en el archivo .env')
+      return
+    }
+    setAiLoading(true)
+    setAiError(null)
+
+    const walletLines = Object.entries(wallet)
+      .filter(([, v]) => v > 0)
+      .map(([cur, amt]) => {
+        const rate = getRate(cur, baseCurrency)
+        return `  ${cur}: ${formatAmount(amt, cur)}${rate ? ` (≈ ${formatAmount(amt * rate, baseCurrency)} ${baseCurrency})` : ''}`
+      }).join('\n') || '  Sin fondos'
+
+    const historyLines = investments.slice(0, 5)
+      .map(inv => `  ${inv.fromCurrency}→${inv.toCurrency} | ${inv.fromAmount} → ${inv.toAmount}`)
+      .join('\n') || '  Sin historial'
+
+    const prompt = `Eres un asesor financiero experto. Analiza este portafolio:
+Moneda base: ${baseCurrency}
+Saldos:
+${walletLines}
+Historial:
+${historyLines}
+Responde SOLO con un JSON:
+{
+  "riesgo_global": "BAJO|MEDIO|ALTO",
+  "resumen": "análisis breve",
+  "top_monedas": [{ "moneda": "USD", "accion": "COMPRAR", "tendencia": "ALCISTA", "motivo": "resumen" }],
+  "analisis_portafolio": "detalle",
+  "consejo_del_dia": "consejo accionable"
+}`
+
+    let success = false
+    for (const model of GEMINI_MODELS) {
+      try {
+        const res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_KEY}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: { temperature: 0.4, responseMimeType: 'application/json' },
+            }),
+          }
+        )
+        if (!res.ok) continue
+        const json = await res.json()
+        const text = json.candidates?.[0]?.content?.parts?.[0]?.text
+        if (text) {
+          setAiData(JSON.parse(text))
+          success = true
+          break
+        }
+      } catch (e) {
+        console.error(`Model ${model} failed:`, e)
+      }
+    }
+    if (!success) setAiError('El asesor IA no está disponible en este momento.')
+    setAiLoading(false)
+  }, [wallet, investments, baseCurrency, getRate])
+
   const handleDeposit = useCallback(async (currency, amount) => {
     try {
-      // Logic for deposit
       deposit(currency, amount)
       return true
     } catch (err) {
-      console.error('Deposit Error:', err)
       return false
     }
   }, [deposit])
@@ -83,13 +156,14 @@ export function useFinanceManager() {
     try {
       return invest(fromCur, toCur, fromAmt, toAmt, rate)
     } catch (err) {
-      console.error('Exchange Error:', err)
       return false
     }
   }, [invest])
 
   return {
+    user,
     baseCurrency,
+    setBaseCurrency,
     rates,
     ratesLoading,
     ratesError,
@@ -97,9 +171,13 @@ export function useFinanceManager() {
     investments,
     chartData,
     chartLoading,
+    aiData,
+    aiLoading,
+    aiError,
     getRate,
     getTotalInBase,
     fetchChartData,
+    analyzePortfolio,
     handleDeposit,
     handleExchange,
     CURRENCIES

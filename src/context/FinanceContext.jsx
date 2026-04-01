@@ -1,28 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { financeService } from '../services/financeService'
-
-export const CURRENCIES = {
-  USD: { name: 'Dólar Americano',    flag: '🇺🇸', symbol: '$',   code: 'USD' },
-  EUR: { name: 'Euro',               flag: '🇪🇺', symbol: '€',   code: 'EUR' },
-  GBP: { name: 'Libra Esterlina',    flag: '🇬🇧', symbol: '£',   code: 'GBP' },
-  COP: { name: 'Peso Colombiano',    flag: '🇨🇴', symbol: '$',   code: 'COP' },
-  MXN: { name: 'Peso Mexicano',      flag: '🇲🇽', symbol: '$',   code: 'MXN' },
-  BRL: { name: 'Real Brasileño',     flag: '🇧🇷', symbol: 'R$',  code: 'BRL' },
-  JPY: { name: 'Yen Japonés',        flag: '🇯🇵', symbol: '¥',   code: 'JPY' },
-  CHF: { name: 'Franco Suizo',       flag: '🇨🇭', symbol: 'Fr',  code: 'CHF' },
-  CAD: { name: 'Dólar Canadiense',   flag: '🇨🇦', symbol: '$',   code: 'CAD' },
-  ARS: { name: 'Peso Argentino',     flag: '🇦🇷', symbol: '$',   code: 'ARS' },
-  CLP: { name: 'Peso Chileno',       flag: '🇨🇱', symbol: '$',   code: 'CLP' },
-  PEN: { name: 'Sol Peruano',        flag: '🇵🇪', symbol: 'S/',  code: 'PEN' },
-}
-
-export function formatAmount(amount, currency) {
-  const decimals = ['JPY', 'CLP', 'COP'].includes(currency) ? 0 : 2
-  return new Intl.NumberFormat('es-CO', {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  }).format(amount)
-}
+import { CURRENCIES, formatAmount } from '../constants/currencies'
 
 const DEFAULT_STATE = {
   user: {
@@ -121,49 +99,40 @@ export function FinanceProvider({ children }) {
 
   // Returns true if successful, false if insufficient funds
   const invest = useCallback((fromCurrency, toCurrency, fromAmount, toAmount, rate) => {
-    let ok = false
-    setState(prev => {
-      const available = prev.wallet[fromCurrency] || 0
-      if (available < fromAmount) return prev
-      ok = true
-      return {
-        ...prev,
-        wallet: {
-          ...prev.wallet,
-          [fromCurrency]: available - fromAmount,
-          [toCurrency]: (prev.wallet[toCurrency] || 0) + toAmount,
+    const available = state.wallet[fromCurrency] || 0
+    if (available < fromAmount) return false
+
+    setState(prev => ({
+      ...prev,
+      wallet: {
+        ...prev.wallet,
+        [fromCurrency]: (prev.wallet[fromCurrency] || 0) - fromAmount,
+        [toCurrency]: (prev.wallet[toCurrency] || 0) + toAmount,
+      },
+      investments: [
+        {
+          id: Date.now(),
+          fromCurrency,
+          toCurrency,
+          fromAmount,
+          toAmount,
+          rate,
+          date: new Date().toISOString(),
         },
-        investments: [
-          {
-            id: Date.now(),
-            fromCurrency,
-            toCurrency,
-            fromAmount,
-            toAmount,
-            rate,
-            date: new Date().toISOString(),
-          },
-          ...prev.investments,
-        ],
-      }
-    })
-    return ok
-  }, [])
+        ...prev.investments,
+      ],
+    }))
+    return true
+  }, [state.wallet])
 
   const getTotalInBase = useCallback(() => {
     const base = state.baseCurrency
     return Object.entries(state.wallet).reduce((total, [cur, amt]) => {
       if (!amt || amt <= 0) return total
-      const rate = cur === base ? 1 : (() => {
-        const r = state.rates
-        if (!r || !Object.keys(r).length) return null
-        if (cur === 'USD') return r[base] ?? null
-        if (base === 'USD') return r[cur] ? 1 / r[cur] : null
-        return r[base] && r[cur] ? r[base] / r[cur] : null
-      })()
+      const rate = getRate(cur, base)
       return rate != null ? total + amt * rate : total
     }, 0)
-  }, [state.wallet, state.baseCurrency, state.rates])
+  }, [state.wallet, state.baseCurrency, getRate])
 
   return (
     <FinanceContext.Provider value={{

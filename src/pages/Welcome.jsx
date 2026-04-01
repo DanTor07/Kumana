@@ -42,45 +42,41 @@ export default function Welcome() {
             }}
           >
             <div className="flex justify-between items-start">
-              <div>
-                <p className="text-xs" style={{ color: '#7aa899' }}>Balance total</p>
-                <p className="text-2xl font-bold text-white mt-0.5">$2,000,000</p>
-                <p className="text-xs" style={{ color: '#7aa899' }}>COP</p>
-              </div>
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center"
-                style={{ background: 'rgba(0,194,139,0.15)' }}
-              >
-                <span className="material-symbols-rounded" style={{ color: '#00c28b', fontVariationSettings: "'FILL' 1" }}>
-                  account_balance_wallet
-                </span>
+            <div>
+              <p className="text-xs" style={{ color: '#7aa899' }}>Balance total</p>
+              <p className="text-2xl font-bold text-white mt-0.5">$2,000,000</p>
+              <div className="flex items-center gap-2 mt-1">
+                 <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md" style={{ background: 'rgba(0,194,139,0.1)', color: '#00c28b' }}>COP</span>
+                 <span className="text-[10px] text-[#7aa899] font-medium opacity-80 italic">1 USD ≈ 4,120 COP</span>
               </div>
             </div>
-            <div className="flex justify-between items-end">
-              <div className="flex gap-1">
-                {[1,2,3,4].map(i => (
-                  <div key={i} className="w-1.5 h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.3)' }} />
-                ))}
-                <span className="text-xs ml-1 text-white font-medium tracking-widest">8842</span>
-              </div>
-              <div
-                className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium"
-                style={{ background: 'rgba(0,194,139,0.2)', color: '#06f9b4' }}
-              >
-                <span className="material-symbols-rounded text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>trending_up</span>
-                +2.4%
-              </div>
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center"
+              style={{ background: 'rgba(0,194,139,0.15)' }}
+            >
+              <span className="material-symbols-rounded" style={{ color: '#00c28b', fontVariationSettings: "'FILL' 1" }}>
+                account_balance_wallet
+              </span>
             </div>
           </div>
 
-          {/* Floating exchange badge */}
-          <div
-            className="absolute -right-2 top-4 px-3 py-2 rounded-2xl text-xs font-medium"
-            style={{ background: '#172d25', border: '1px solid rgba(0,194,139,0.2)', color: '#00c28b' }}
-          >
-            1 USD ≈ 4,120 COP
+          <div className="flex justify-between items-end">
+            <div className="flex gap-1">
+              {[1,2,3,4].map(i => (
+                <div key={i} className="w-1.5 h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.3)' }} />
+              ))}
+              <span className="text-xs ml-1 text-white font-medium tracking-widest">8842</span>
+            </div>
+            <div
+              className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium"
+              style={{ background: 'rgba(0,194,139,0.2)', color: '#06f9b4' }}
+            >
+              <span className="material-symbols-rounded text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>trending_up</span>
+              +2.4%
+            </div>
           </div>
         </div>
+      </div>
 
         {/* Headline */}
         <div className="text-center mb-8">
