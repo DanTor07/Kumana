@@ -1,16 +1,17 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth'
 
 export default function VerifyNumber() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { verifyCode, loading, error } = useAuth()
   const phone = location.state?.phone || '3000000088'
   const countryCode = location.state?.countryCode || '+57'
 
   const [digits, setDigits] = useState(['', '', '', '', '', ''])
   const [countdown, setCountdown] = useState(30)
   const [canResend, setCanResend] = useState(false)
-  const inputRefs = useRef([])
 
   // Masked phone display
   const maskedPhone = `${countryCode} *** ** ${phone.slice(-2)}`
@@ -37,10 +38,6 @@ export default function VerifyNumber() {
       const newDigits = [...digits]
       newDigits[idx] = key
       setDigits(newDigits)
-      if (idx === 5) {
-        // Auto-verify on last digit
-        setTimeout(() => navigate('/completar-perfil'), 300)
-      }
     }
   }
 
@@ -139,6 +136,13 @@ export default function VerifyNumber() {
           )}
         </div>
 
+        {/* Error Message */}
+        {error && (
+          <p className="text-center text-xs font-medium text-red-500 mb-4 animate-bounce">
+            {error} (Prueba con 123456)
+          </p>
+        )}
+
         {/* Numeric keypad */}
         <div className="flex flex-col gap-3">
           {keys.map((row, ri) => (
@@ -174,15 +178,22 @@ export default function VerifyNumber() {
       {/* Footer CTA */}
       <footer className="px-6 pb-10 pt-4">
         <button
-          onClick={() => isComplete && navigate('/completar-perfil')}
+          disabled={!isComplete || loading}
+          onClick={async () => {
+            if (isComplete) {
+              const ok = await verifyCode(digits.join(''))
+              if (ok) navigate('/completar-perfil')
+            }
+          }}
           className="w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-all"
           style={{
-            background: isComplete ? 'linear-gradient(135deg, #00c28b, #06f9b4)' : '#1a3028',
-            color: isComplete ? '#0a1f18' : '#5a8a78',
+            background: isComplete && !loading ? 'linear-gradient(135deg, #00c28b, #06f9b4)' : '#1a3028',
+            color: isComplete && !loading ? '#0a1f18' : '#5a8a78',
             border: 'none',
+            opacity: loading ? 0.7 : 1,
           }}
         >
-          Verificar
+          {loading ? 'Verificando...' : 'Verificar'}
           <span className="material-symbols-rounded" style={{ fontVariationSettings: "'FILL' 1" }}>arrow_forward</span>
         </button>
       </footer>

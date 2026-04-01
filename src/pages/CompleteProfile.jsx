@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useFinance } from '../context/FinanceContext'
+import { useAuth } from '../hooks/useAuth'
 
 const ID_TYPES = [
   { value: 'CC', label: 'Cédula de Ciudadanía' },
@@ -11,7 +11,7 @@ const ID_TYPES = [
 
 export default function CompleteProfile() {
   const navigate = useNavigate()
-  const { updateUser, user } = useFinance()
+  const { user, saveProfile, loading } = useAuth()
 
   const [name, setName] = useState(user.name || '')
   const [username, setUsername] = useState(user.username || '')
@@ -33,17 +33,16 @@ export default function CompleteProfile() {
   const isValidCedula = cedula.replace(/\D/g, '').length >= 6
   const canSubmit = isValidName && isValidUsername && isValidEmail && isValidCedula
 
-  const handleSubmit = () => {
-    if (!canSubmit) return
-    updateUser({
+  const handleSubmit = async () => {
+    if (!canSubmit || loading) return
+    const ok = await saveProfile({
       name: name.trim(),
       username: username.trim().replace(/^@/, ''),
       email: email.trim(),
       idType,
       cedula,
-      memberSince: new Date().toLocaleDateString('es-CO', { month: 'short', year: 'numeric' }),
     })
-    navigate('/dashboard')
+    if (ok) navigate('/dashboard')
   }
 
   const inputStyle = (key) => ({
@@ -150,11 +149,16 @@ export default function CompleteProfile() {
 
       <footer className="px-6 pb-10 pt-3">
         <button
+          disabled={!canSubmit || loading}
           onClick={handleSubmit}
-          className="w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2 mb-4 border-0"
-          style={{ background: canSubmit ? 'linear-gradient(135deg, #00c28b, #06f9b4)' : '#1a3028', color: canSubmit ? '#0a1f18' : '#5a8a78' }}
+          className="w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2 mb-4 border-0 transition-opacity"
+          style={{ 
+            background: canSubmit && !loading ? 'linear-gradient(135deg, #00c28b, #06f9b4)' : '#1a3028', 
+            color: canSubmit && !loading ? '#0a1f18' : '#5a8a78',
+            opacity: loading ? 0.7 : 1
+          }}
         >
-          Finalizar registro
+          {loading ? 'Guardando...' : 'Finalizar registro'}
           <span className="material-symbols-rounded" style={{ fontVariationSettings: "'FILL' 1" }}>arrow_forward</span>
         </button>
         <div className="flex items-center justify-center gap-2">

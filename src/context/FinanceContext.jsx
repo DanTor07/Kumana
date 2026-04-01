@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { financeService } from '../services/financeService'
 
 export const CURRENCIES = {
   USD: { name: 'Dólar Americano',    flag: '🇺🇸', symbol: '$',   code: 'USD' },
@@ -67,8 +68,7 @@ export function FinanceProvider({ children }) {
     setRatesLoading(true)
     setRatesError(null)
     try {
-      const res = await fetch('https://open.er-api.com/v6/latest/USD')
-      const data = await res.json()
+      const data = await financeService.getLatestRates()
       if (data.result === 'success') {
         setState(prev => ({
           ...prev,

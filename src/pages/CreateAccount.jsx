@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth'
 
 const countryCodes = [
   { code: '+57', flag: '🇨🇴', name: 'Colombia' },
@@ -10,6 +11,7 @@ const countryCodes = [
 
 export default function CreateAccount() {
   const navigate = useNavigate()
+  const { registerPhone, loading } = useAuth()
   const [phone, setPhone] = useState('')
   const [countryCode, setCountryCode] = useState(countryCodes[0])
   const [showDropdown, setShowDropdown] = useState(false)
@@ -126,15 +128,22 @@ export default function CreateAccount() {
       {/* Footer */}
       <footer className="px-6 pb-10">
         <button
-          onClick={() => isValid && navigate('/verificar', { state: { phone, countryCode: countryCode.code } })}
+          disabled={!isValid || loading}
+          onClick={async () => {
+            if (isValid) {
+              const ok = await registerPhone(phone, countryCode.code)
+              if (ok) navigate('/verificar', { state: { phone, countryCode: countryCode.code } })
+            }
+          }}
           className="w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2 mb-4 transition-opacity"
           style={{
-            background: isValid ? 'linear-gradient(135deg, #00c28b, #06f9b4)' : '#1a3028',
-            color: isValid ? '#0a1f18' : '#5a8a78',
+            background: isValid && !loading ? 'linear-gradient(135deg, #00c28b, #06f9b4)' : '#1a3028',
+            color: isValid && !loading ? '#0a1f18' : '#5a8a78',
             border: 'none',
+            opacity: loading ? 0.7 : 1,
           }}
         >
-          Continuar
+          {loading ? 'Enviando...' : 'Continuar'}
           <span className="material-symbols-rounded" style={{ fontVariationSettings: "'FILL' 1" }}>arrow_forward</span>
         </button>
         <p className="text-center text-xs leading-relaxed" style={{ color: '#5a8a78' }}>
