@@ -1,6 +1,9 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { financeService } from '../services/financeService'
 import { CURRENCIES, formatAmount } from '../constants/currencies'
+
+const STORAGE_KEY = 'kumana_v1'
 
 const DEFAULT_STATE = {
   user: {
@@ -8,6 +11,7 @@ const DEFAULT_STATE = {
     username: '',
     email: '',
     phone: '',
+    phoneVerified: false,
     idType: 'CC',
     cedula: '',
     avatar: null,
@@ -21,26 +25,30 @@ const DEFAULT_STATE = {
   lastUpdated: null,
 }
 
-function load() {
-  try {
-    const s = localStorage.getItem('kumana_v1')
-    if (s) return { ...DEFAULT_STATE, ...JSON.parse(s) }
-  } catch {}
-  return DEFAULT_STATE
-}
-
-function save(data) {
-  try { localStorage.setItem('kumana_v1', JSON.stringify(data)) } catch {}
-}
-
 const FinanceContext = createContext(null)
 
 export function FinanceProvider({ children }) {
-  const [state, setState] = useState(load)
+  const [state, setState] = useState(DEFAULT_STATE)
+  const [hydrated, setHydrated] = useState(false)
   const [ratesLoading, setRatesLoading] = useState(false)
   const [ratesError, setRatesError] = useState(null)
 
-  useEffect(() => { save(state) }, [state])
+  // Carga inicial desde AsyncStorage (asíncrono)
+  useEffect(() => {
+    AsyncStorage.getItem(STORAGE_KEY)
+      .then(s => {
+        if (s) setState(prev => ({ ...prev, ...JSON.parse(s) }))
+        setHydrated(true)
+      })
+      .catch(() => setHydrated(true))
+  }, [])
+
+  // Persistir cambios en AsyncStorage
+  useEffect(() => {
+    if (hydrated) {
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state)).catch(() => {})
+    }
+  }, [state, hydrated])
 
   const fetchRates = useCallback(async () => {
     setRatesLoading(true)
@@ -65,17 +73,18 @@ export function FinanceProvider({ children }) {
   }, [])
 
   useEffect(() => {
-    fetchRates()
-    const id = setInterval(fetchRates, 60000)
-    return () => clearInterval(id)
-  }, [fetchRates])
+    if (hydrated) {
+      fetchRates()
+      const id = setInterval(fetchRates, 60000)
+      return () => clearInterval(id)
+    }
+  }, [hydrated, fetchRates])
 
-  // Returns: how many units of `to` you get for 1 unit of `from`
+  // Retorna cuántas unidades de `to` se obtienen por 1 unidad de `from`
   const getRate = useCallback((from, to) => {
     if (from === to) return 1
     const r = state.rates
     if (!r || Object.keys(r).length === 0) return null
-    // rates are relative to USD (ratesBase)
     if (from === 'USD') return r[to] ?? null
     if (to === 'USD') return r[from] ? 1 / r[from] : null
     if (!r[from] || !r[to]) return null
@@ -97,7 +106,7 @@ export function FinanceProvider({ children }) {
     }))
   }, [])
 
-  // Returns true if successful, false if insufficient funds
+  // Retorna true si exitoso, false si fondos insuficientes
   const invest = useCallback((fromCurrency, toCurrency, fromAmount, toAmount, rate) => {
     const available = state.wallet[fromCurrency] || 0
     if (available < fromAmount) return false
@@ -133,6 +142,8 @@ export function FinanceProvider({ children }) {
       return rate != null ? total + amt * rate : total
     }, 0)
   }, [state.wallet, state.baseCurrency, getRate])
+
+  if (!hydrated) return null
 
   return (
     <FinanceContext.Provider value={{

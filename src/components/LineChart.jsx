@@ -1,53 +1,69 @@
-import React from 'react'
+import { View, ActivityIndicator, StyleSheet } from 'react-native'
+import Svg, { Defs, LinearGradient, Stop, Polygon, Polyline, Circle } from 'react-native-svg'
 import { COLORS } from '../styles/theme'
 
 export default function LineChart({ data, isLoading }) {
   if (isLoading) {
     return (
-      <div
-        className="w-full rounded-xl animate-pulse"
-        style={{ height: 70, background: 'rgba(255,255,255,0.04)' }}
-      />
+      <View style={styles.loader}>
+        <ActivityIndicator color={COLORS.primary} size="small" />
+      </View>
     )
   }
-  if (!data || data.length < 2) return null
+  if (!data || data.length < 2) {
+    return <View style={styles.empty} />
+  }
 
-  const W = 300, H = 90
+  const W = 300
+  const H = 90
   const values = data.map(d => d.value)
   const minV = Math.min(...values)
   const maxV = Math.max(...values)
   const span = (maxV - minV) || (minV ? minV * 0.01 : 1)
-
   const px = i => (i / (data.length - 1)) * W
   const py = v => H - 10 - ((v - minV) / span) * (H - 20)
 
-  const pts  = data.map((d, i) => `${px(i)},${py(d.value)}`).join(' ')
-  const area = `0,${H} ${pts} ${W},${H}`
-
-  const isUp  = data[data.length - 1].value >= data[0].value
+  const points = data.map((d, i) => `${px(i)},${py(d.value)}`).join(' ')
+  const areaPoints = `0,${H} ${points} ${W},${H}`
+  const isUp = data[data.length - 1].value >= data[0].value
   const color = isUp ? COLORS.primary : COLORS.error
-  const endX  = px(data.length - 1)
-  const endY  = py(data[data.length - 1].value)
+  const endX = px(data.length - 1)
+  const endY = py(data[data.length - 1].value)
 
   return (
-    <svg width="100%" height="75" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ overflow: 'visible' }}>
-      <defs>
-        <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%"   stopColor={color} stopOpacity="0.3" />
-          <stop offset="100%" stopColor={color} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <polygon points={area} fill="url(#chartGrad)" />
-      <polyline
-        points={pts}
+    <Svg width="100%" height={75} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
+      <Defs>
+        <LinearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+          <Stop offset="0%" stopColor={color} stopOpacity="0.3" />
+          <Stop offset="100%" stopColor={color} stopOpacity="0" />
+        </LinearGradient>
+      </Defs>
+      <Polygon points={areaPoints} fill="url(#chartGrad)" />
+      <Polyline
+        points={points}
         fill="none"
         stroke={color}
-        strokeWidth="3"
+        strokeWidth={3}
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <circle cx={endX} cy={endY} r="4"  fill={color} />
-      <circle cx={endX} cy={endY} r="10" fill={color} fillOpacity="0.15" />
-    </svg>
+      <Circle cx={endX} cy={endY} r={10} fill={color} fillOpacity={0.15} />
+      <Circle cx={endX} cy={endY} r={4} fill={color} />
+    </Svg>
   )
 }
+
+const styles = StyleSheet.create({
+  loader: {
+    height: 75,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  empty: {
+    height: 75,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderRadius: 12,
+  },
+})

@@ -3,7 +3,7 @@ import { useFinance } from '../context/FinanceContext'
 import { CURRENCIES, formatAmount } from '../constants/currencies'
 import { financeService } from '../services/financeService'
 
-const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY
+const GEMINI_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY
 const GEMINI_MODELS = [
   'gemini-2.0-flash',
   'gemini-1.5-flash',
@@ -81,7 +81,7 @@ export function useFinanceManager() {
 
   const analyzePortfolio = useCallback(async () => {
     if (!GEMINI_KEY || GEMINI_KEY === 'TEST') {
-      setAiError('Configura VITE_GEMINI_API_KEY en el archivo .env')
+      setAiError('Configura EXPO_PUBLIC_GEMINI_API_KEY en el archivo .env')
       return
     }
     setAiLoading(true)

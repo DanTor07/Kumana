@@ -32,6 +32,7 @@ export function useAuth() {
     try {
       // Simulation of code verification
       if (code === '123456') { // Mock correct code
+        updateUser({ phoneVerified: true })
         return true
       }
       setError('Código incorrecto.')
@@ -42,7 +43,7 @@ export function useAuth() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [updateUser])
 
   const saveProfile = useCallback(async (profileData) => {
     setLoading(true)
