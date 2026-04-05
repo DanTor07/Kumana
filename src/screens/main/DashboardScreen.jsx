@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import {
   View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet,
+  KeyboardAvoidingView, Platform,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { MaterialIcons } from '@expo/vector-icons'
@@ -71,28 +72,25 @@ export default function DashboardScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
 
         {/* Balance Card */}
         <LinearGradient colors={['#1a3d30', '#0d2a20']} style={styles.balanceCard}>
-          <View style={styles.balanceRow}>
-            <View>
-              <Text style={styles.balanceLabel}>Balance total ({baseCurrency})</Text>
-              <Text style={styles.balanceAmount}>
-                {curInfo?.symbol}{formatAmount(totalBalance, baseCurrency)}
-              </Text>
-            </View>
-            <TouchableOpacity
-              style={styles.depositBtn}
-              onPress={() => navigation.navigate('Exchange')}
-              activeOpacity={0.8}
-            >
-              <LinearGradient colors={[COLORS.primary, COLORS.primaryLight]} style={styles.depositBtnGrad}>
-                <MaterialIcons name="add" size={16} color={COLORS.primaryDark} />
-                <Text style={styles.depositBtnText}>Depositar</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          </View>
+          <Text style={styles.balanceLabel}>Balance total ({baseCurrency})</Text>
+          <Text style={styles.balanceAmount} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
+            {curInfo?.symbol}{formatAmount(totalBalance, baseCurrency)}
+          </Text>
+          <TouchableOpacity
+            style={styles.depositBtn}
+            onPress={() => navigation.navigate('Exchange')}
+            activeOpacity={0.8}
+          >
+            <LinearGradient colors={[COLORS.primary, COLORS.primaryLight]} style={styles.depositBtnGrad}>
+              <MaterialIcons name="add" size={16} color={COLORS.primaryDark} />
+              <Text style={styles.depositBtnText}>Depositar</Text>
+            </LinearGradient>
+          </TouchableOpacity>
           {totalBalance === 0 && (
             <Text style={styles.balanceHint}>Empieza depositando fondos para invertir.</Text>
           )}
@@ -208,6 +206,8 @@ export default function DashboardScreen({ navigation }) {
               placeholder="0.00"
               placeholderTextColor={'rgba(255,255,255,0.4)'}
               keyboardType="numeric"
+              keyboardAppearance="dark"
+              returnKeyType="done"
             />
           </View>
 
@@ -230,13 +230,15 @@ export default function DashboardScreen({ navigation }) {
             <Text style={styles.btnText}>Continuar al cambio</Text>
           </TouchableOpacity>
         </View>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: COLORS.bg },
+  flex: { flex: 1 },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: SPACING.lg, paddingTop: SPACING.md, paddingBottom: SPACING.md,
@@ -262,10 +264,9 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.xxl, padding: SPACING.lg, marginBottom: SPACING.md,
     borderWidth: 1, borderColor: `${COLORS.primary}33`,
   },
-  balanceRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   balanceLabel: { color: COLORS.textMuted, fontSize: 11, marginBottom: 4 },
-  balanceAmount: { color: COLORS.white, fontSize: 30, fontWeight: '900' },
-  depositBtn: { borderRadius: RADIUS.xl, overflow: 'hidden' },
+  balanceAmount: { color: COLORS.white, fontSize: 30, fontWeight: '900', marginBottom: SPACING.md },
+  depositBtn: { borderRadius: RADIUS.xl, overflow: 'hidden', alignSelf: 'flex-start' },
   depositBtnGrad: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
     paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, borderRadius: RADIUS.xl,

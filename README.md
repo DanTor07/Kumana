@@ -2,17 +2,16 @@
 
 > Aplicación móvil de gestión de divisas y portafolio financiero para Latinoamérica.
 
-![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
-![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
-![Capacitor](https://img.shields.io/badge/Capacitor-8-119EFF?logo=capacitor&logoColor=white)
+![React Native](https://img.shields.io/badge/React_Native-0.81-61DAFB?logo=react&logoColor=white)
+![Expo](https://img.shields.io/badge/Expo-54-000020?logo=expo&logoColor=white)
+![React Navigation](https://img.shields.io/badge/React_Navigation-7-6B52AE?logo=react&logoColor=white)
 ![License](https://img.shields.io/badge/Licencia-MIT-green)
 
 ---
 
 ## Vista general
 
-**Kumana Fintech** es una aplicación móvil (React + Capacitor) que permite a los usuarios gestionar billeteras multi-divisa, convertir entre más de 12 monedas, visualizar tendencias de mercado en tiempo real y recibir recomendaciones financieras personalizadas con inteligencia artificial.
+**Kumana Fintech** es una aplicación móvil nativa (React Native + Expo) que permite a los usuarios gestionar billeteras multi-divisa, convertir entre más de 12 monedas, visualizar tendencias de mercado en tiempo real y recibir recomendaciones financieras personalizadas con inteligencia artificial.
 
 Diseñada con un enfoque mobile-first y una interfaz en español, está orientada al mercado latinoamericano.
 
@@ -31,65 +30,96 @@ Diseñada con un enfoque mobile-first y una interfaz en español, está orientad
 | **Billetera multi-divisa** | Deposita y administra saldos en 12+ monedas (USD, EUR, COP, MXN, BRL y más) |
 | **Conversión de divisas** | Convierte entre cualquier par de monedas con tasas en tiempo real |
 | **Gráficos de mercado** | Historial de tasas de cambio con datos reales (Frankfurter API) |
-| **Alertas de precio** | Crea alertas personalizadas para pares de divisas y criptomonedas (BTC) |
+| **Alertas de precio** | Crea alertas personalizadas para pares de divisas con Switch nativo |
 | **Asesor con IA** | Análisis de portafolio y recomendaciones impulsado por Google Gemini |
 | **Historial de inversiones** | Registro completo de conversiones con fecha, hora y tasa aplicada |
-| **Perfil de usuario** | Gestión de avatar, datos personales, correo y número de teléfono |
+| **Perfil de usuario** | Gestión de avatar (cámara/galería), datos personales y moneda base |
 | **Resumen de portafolio** | Balance total del portafolio en la moneda base elegida por el usuario |
 
 ---
 
 ## Stack tecnológico
 
-### Frontend
-- **[React 19](https://react.dev/)** — Biblioteca de UI con hooks
-- **[React Router DOM 7](https://reactrouter.com/)** — Enrutamiento del lado del cliente (SPA)
-- **[Vite 7](https://vite.dev/)** — Build tool con HMR ultrarrápido
-- **[Tailwind CSS 4](https://tailwindcss.com/)** — Estilos utilitarios
-
 ### Mobile
-- **[Capacitor 8](https://capacitorjs.com/)** — Wrapper nativo React → Android
+- **[React Native 0.81](https://reactnative.dev/)** — Framework de UI nativa
+- **[Expo SDK 54](https://expo.dev/)** — Managed Workflow para desarrollo y distribución
+- **[React Navigation 7](https://reactnavigation.org/)** — Navegación: NativeStack + BottomTabs
+- **[expo-linear-gradient](https://docs.expo.dev/versions/latest/sdk/linear-gradient/)** — Gradientes nativos
+- **[expo-image-picker](https://docs.expo.dev/versions/latest/sdk/imagepicker/)** — Selector de avatar desde cámara o galería
+- **[@expo/vector-icons](https://docs.expo.dev/guides/icons/)** — Iconografía (MaterialIcons)
+- **[react-native-svg](https://github.com/software-mansion/react-native-svg)** — Gráfico de líneas del mercado
+- **[AsyncStorage](https://react-native-async-storage.github.io/async-storage/)** — Persistencia local
 
 ### APIs externas
 - **[Frankfurter API](https://www.frankfurter.app/)** — Datos históricos de tasas (gratuita, sin clave)
 - **[Open Exchange Rates (er-api.com)](https://www.exchangerate-api.com/)** — Tasas actuales en vivo
 - **[Google Gemini API](https://ai.google.dev/)** — Análisis de portafolio con IA
 
-### Herramientas de desarrollo
-- **ESLint 9** — Linting de código
-- **npm** — Gestor de paquetes
+---
+
+## Arquitectura MVC
+
+El proyecto sigue una arquitectura **Modelo — Vista — Controlador**:
+
+```
+src/
+├── services/          # Modelo — llamadas a APIs externas
+│   └── financeService.js
+├── context/           # Estado global
+│   └── FinanceContext.jsx
+├── hooks/             # Controlador — lógica de negocio
+│   ├── useFinanceManager.js
+│   └── useAuth.js
+├── screens/           # Vista — pantallas de la app
+│   ├── auth/
+│   └── main/
+├── components/        # Componentes reutilizables
+├── navigation/        # Configuración de navegación
+├── styles/            # Tema y tokens de diseño
+└── constants/         # Monedas y formateadores
+```
 
 ---
 
-## Estructura del proyecto
+## Estructura completa del proyecto
 
 ```
-kumana-app/
-├── src/
-│   ├── main.jsx                  # Punto de entrada
-│   ├── App.jsx                   # Configuración de rutas (9 rutas)
-│   ├── index.css                 # Estilos globales + Tailwind
-│   ├── context/
-│   │   └── FinanceContext.jsx    # Estado global (usuario, billetera, tasas)
-│   ├── components/
-│   │   └── BottomNav.jsx         # Barra de navegación inferior
-│   └── pages/
-│       ├── Welcome.jsx           # Pantalla de bienvenida
-│       ├── CreateAccount.jsx     # Registro con número de teléfono
-│       ├── VerifyNumber.jsx      # Verificación por SMS
-│       ├── CompleteProfile.jsx   # Configuración inicial de perfil
-│       ├── Dashboard.jsx         # Pantalla principal (balance, gráficos, simulador)
-│       ├── Exchange.jsx          # Conversiones, portafolio y asesor IA
-│       ├── ConfirmConversion.jsx # Confirmación de conversión
-│       ├── RateAlerts.jsx        # Alertas de precios
-│       └── Profile.jsx           # Configuración y perfil del usuario
-├── android/                      # Proyecto Android nativo (Capacitor)
-├── dist/                         # Build de producción
-├── public/                       # Assets estáticos
-├── capacitor.config.json         # Configuración de Capacitor
-├── vite.config.js                # Configuración de Vite
-├── eslint.config.js              # Reglas de ESLint
-└── index.html                    # HTML de entrada
+kumana/
+├── App.jsx                        # Raíz: SafeAreaProvider + FinanceProvider
+├── app.json                       # Configuración de Expo
+├── index.js                       # Punto de entrada
+├── assets/                        # Íconos y splash screen
+└── src/
+    ├── context/
+    │   └── FinanceContext.jsx     # Estado global + AsyncStorage
+    ├── hooks/
+    │   ├── useFinanceManager.js   # Lógica de inversiones, tasas e IA
+    │   └── useAuth.js             # Lógica de autenticación
+    ├── services/
+    │   └── financeService.js      # Frankfurter API + er-api.com
+    ├── navigation/
+    │   ├── AppNavigator.jsx       # Decide entre AuthStack / MainTabs
+    │   ├── AuthStack.jsx          # Flujo de registro e inicio de sesión
+    │   └── MainTabs.jsx           # Tabs principales + DashboardStack
+    ├── screens/
+    │   ├── auth/
+    │   │   ├── WelcomeScreen.jsx
+    │   │   ├── CreateAccountScreen.jsx
+    │   │   ├── VerifyNumberScreen.jsx
+    │   │   └── CompleteProfileScreen.jsx
+    │   └── main/
+    │       ├── DashboardScreen.jsx
+    │       ├── ExchangeScreen.jsx
+    │       ├── ConfirmConversionScreen.jsx
+    │       ├── RateAlertsScreen.jsx
+    │       └── ProfileScreen.jsx
+    ├── components/
+    │   ├── LineChart.jsx          # Gráfico SVG de tendencia
+    │   └── ChartPicker.jsx        # Selector de divisa (Modal + FlatList)
+    ├── styles/
+    │   └── theme.js               # COLORS, SPACING, RADIUS
+    └── constants/
+        └── currencies.js          # Definición de 12+ monedas
 ```
 
 ---
@@ -98,73 +128,63 @@ kumana-app/
 
 - **Node.js** >= 18
 - **npm** >= 9
-- Para desarrollo Android: **Android Studio** y **JDK 17+**
+- **Expo Go** — app instalada en tu dispositivo ([Android](https://play.google.com/store/apps/details?id=host.exp.exponent) / [iOS](https://apps.apple.com/app/expo-go/id982107779))
 
 ---
 
 ## Instalación y uso
 
-### Desarrollo web
-
 ```bash
 # Clonar el repositorio
-git clone https://github.com/tu-usuario/kumana-app.git
-cd kumana-app
+git clone https://github.com/tu-usuario/kumana.git
+cd kumana
 
 # Instalar dependencias
 npm install
 
-# Iniciar servidor de desarrollo
-npm run dev
-# Disponible en http://localhost:5173
+# Iniciar el servidor de desarrollo
+npm start
 ```
 
-### Build de producción
+Escanea el QR con **Expo Go** desde tu dispositivo.
+
+### Ejecutar en plataforma específica
 
 ```bash
-npm run build       # Genera el bundle en /dist
-npm run preview     # Vista previa local del build
-```
-
-### Build y despliegue en Android
-
-```bash
-# Construir y sincronizar con Capacitor (abre Android Studio)
-npm run android
-
-# Solo sincronizar (sin abrir Android Studio)
-npm run sync
+npm run android   # Abre en emulador o dispositivo Android
+npm run ios       # Abre en simulador iOS (requiere macOS)
 ```
 
 ---
 
 ## Variables de entorno
 
-La aplicación utiliza una clave de API de Google Gemini para el módulo de asesoría con IA. Para producción se recomienda moverla a una variable de entorno:
+Crea un archivo `.env` en la raíz del proyecto:
 
 ```env
-VITE_GEMINI_API_KEY=tu_clave_aqui
+EXPO_PUBLIC_GEMINI_API_KEY=tu_clave_aqui
 ```
+
+> La clave se obtiene en [Google AI Studio](https://aistudio.google.com/). Sin ella, el módulo de asesor IA muestra un mensaje informativo y el resto de la app funciona con normalidad.
 
 ---
 
 ## Diseño y UX
 
 - **Tema oscuro** — Fondo `#0f231d` (verde oscuro), acento primario `#00c28b` (menta)
-- **Mobile-first** — Ancho máximo de viewport: 430px
 - **Idioma** — Español (locale `es-CO`)
-- **Tipografía** — Inter (Google Fonts)
-- **Iconos** — Material Symbols Rounded (Google Fonts)
-- **Touch-friendly** — Botones con mínimo 44px de área táctil
+- **Iconos** — MaterialIcons vía `@expo/vector-icons`
+- **Touch-friendly** — `TouchableOpacity` en todos los elementos interactivos
+- **Estilos** — `StyleSheet.create()` con tokens centralizados en `theme.js`
 
 ---
 
 ## Estado global y persistencia
 
-El estado de la aplicación se gestiona con React Context (`FinanceContext`) y se persiste automáticamente en `localStorage` bajo la clave `kumana_v1`.
+El estado se gestiona con React Context (`FinanceContext`) y se persiste automáticamente en `AsyncStorage` bajo la clave `kumana_v1`.
 
 Incluye:
-- Perfil del usuario
+- Perfil del usuario y estado de verificación (`phoneVerified`)
 - Saldos por divisa
 - Historial de conversiones
 - Tasas de cambio (actualización automática cada 60 s)
@@ -172,31 +192,33 @@ Incluye:
 
 ---
 
-## Rutas
+## Navegación
 
-| Ruta | Componente | Descripción |
-|------|-----------|-------------|
-| `/` | `Welcome` | Pantalla de bienvenida |
-| `/crear-cuenta` | `CreateAccount` | Registro con teléfono |
-| `/verificar` | `VerifyNumber` | Verificación SMS |
-| `/completar-perfil` | `CompleteProfile` | Configuración de perfil |
-| `/dashboard` | `Dashboard` | Pantalla principal |
-| `/cambio` | `Exchange` | Portafolio y conversiones |
-| `/confirmar` | `ConfirmConversion` | Confirmación de operación |
-| `/alertas` | `RateAlerts` | Alertas de precio |
-| `/perfil` | `Profile` | Perfil y configuración |
+### Flujo de autenticación (`AuthStack`)
+| Pantalla | Descripción |
+|---|---|
+| `WelcomeScreen` | Bienvenida con opción de registrarse o iniciar sesión |
+| `CreateAccountScreen` | Ingreso de número de teléfono (máx. 10 dígitos) |
+| `VerifyNumberScreen` | Verificación OTP con teclado numérico personalizado |
+| `CompleteProfileScreen` | Configuración inicial del perfil (solo en registro) |
+
+### Tabs principales (`MainTabs`)
+| Tab | Pantalla | Descripción |
+|---|---|---|
+| Inicio | `DashboardScreen` | Balance, gráfico de mercado y simulador |
+| Cambio | `ExchangeScreen` | Portafolio, depósitos, conversiones y asesor IA |
+| Alertas | `RateAlertsScreen` | Alertas de precio con Switch nativo |
+| Perfil | `ProfileScreen` | Datos personales, avatar y moneda base |
 
 ---
 
 ## Scripts disponibles
 
 ```bash
-npm run dev       # Servidor de desarrollo
-npm run build     # Build de producción
-npm run preview   # Vista previa del build
-npm run lint      # Análisis estático con ESLint
-npm run android   # Build + sync + abrir Android Studio
-npm run sync      # Build + sync Capacitor
+npm start         # Inicia Expo Dev Server (escanea con Expo Go)
+npm run android   # Inicia en Android
+npm run ios       # Inicia en iOS
+npm run web       # Inicia en navegador web
 ```
 
 ---
