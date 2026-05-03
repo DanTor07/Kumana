@@ -1,6 +1,6 @@
 plugins {
     kotlin("jvm") version "1.9.22"
-    id("io.ktor.plugin") version "2.3.7"
+    application
     kotlin("plugin.serialization") version "1.9.22"
 }
 
@@ -36,4 +36,8 @@ dependencies {
     // Tests
     testImplementation("io.ktor:ktor-server-tests-jvm:2.3.7")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:1.9.22")
+}
+
+kotlin {
+    jvmToolchain(17)
 }
