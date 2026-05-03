@@ -11,6 +11,6 @@ class InvestmentController {
     fun getByUser(userId: String): List<Investment> =
         service.getByUser(userId)
 
-    fun exchange(request: ExchangeRequest): Investment? =
+    fun exchange(request: ExchangeRequest): Investment =
         service.exchange(request)
 }

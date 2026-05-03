@@ -31,6 +31,7 @@ dependencies {
     implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:2.3.7")
 
     // Logging
+    implementation("io.ktor:ktor-server-call-logging-jvm:2.3.7")
     implementation("ch.qos.logback:logback-classic:1.4.11")
 
     // Tests

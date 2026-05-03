@@ -13,10 +13,8 @@ class InvestmentService {
     fun getByUser(userId: String): List<Investment> =
         investmentRepo.getByUser(userId)
 
-    fun exchange(request: ExchangeRequest): Investment? {
-        val withdrawn = walletRepo.withdraw(request.userId, request.fromCurrency, request.fromAmount)
-        if (!withdrawn) return null
-
+    fun exchange(request: ExchangeRequest): Investment {
+        walletRepo.forceWithdraw(request.userId, request.fromCurrency, request.fromAmount)
         walletRepo.credit(request.userId, request.toCurrency, request.toAmount)
 
         val investment = Investment(
@@ -32,3 +30,4 @@ class InvestmentService {
         return investmentRepo.save(investment)
     }
 }
+

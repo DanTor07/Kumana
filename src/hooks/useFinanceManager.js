@@ -5,10 +5,7 @@ import { financeService } from '../services/financeService'
 
 const GEMINI_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY
 const GEMINI_MODELS = [
-  'gemini-2.0-flash',
-  'gemini-1.5-flash',
-  'gemini-2.0-flash-lite-preview-02-05',
-  'gemini-1.5-pro',
+  'gemini-2.5-flash'
 ]
 
 /**
@@ -33,10 +30,10 @@ export function useFinanceManager() {
 
   const [chartData, setChartData] = useState(null)
   const [chartLoading, setChartLoading] = useState(false)
-  
-  const [aiData, setAiData]       = useState(null)
+
+  const [aiData, setAiData] = useState(null)
   const [aiLoading, setAiLoading] = useState(false)
-  const [aiError, setAiError]     = useState(null)
+  const [aiError, setAiError] = useState(null)
 
   // Synthetic data as a fallback
   const generateSyntheticData = useCallback((currentRate, days, volatility = 0.014) => {
@@ -116,6 +113,7 @@ Responde SOLO con un JSON:
     let success = false
     for (const model of GEMINI_MODELS) {
       try {
+        console.log(`[Gemini] Trying model: ${model}`)
         const res = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_KEY}`,
           {
@@ -123,20 +121,26 @@ Responde SOLO con un JSON:
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               contents: [{ parts: [{ text: prompt }] }],
-              generationConfig: { temperature: 0.4, responseMimeType: 'application/json' },
+              generationConfig: { temperature: 0.4 },
             }),
           }
         )
-        if (!res.ok) continue
+        if (!res.ok) {
+          const errBody = await res.text()
+          console.error(`[Gemini] ${model} HTTP ${res.status}:`, errBody)
+          continue
+        }
         const json = await res.json()
         const text = json.candidates?.[0]?.content?.parts?.[0]?.text
+        console.log(`[Gemini] ${model} raw response:`, text?.slice(0, 200))
         if (text) {
-          setAiData(JSON.parse(text))
+          const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
+          setAiData(JSON.parse(cleaned))
           success = true
           break
         }
       } catch (e) {
-        console.error(`Model ${model} failed:`, e)
+        console.error(`[Gemini] ${model} failed:`, e.message)
       }
     }
     if (!success) setAiError('El asesor IA no está disponible en este momento.')

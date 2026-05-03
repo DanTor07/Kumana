@@ -22,6 +22,11 @@ class WalletRepository {
         return true
     }
 
+    fun forceWithdraw(userId: String, currency: String, amount: Double) {
+        val wallet = wallets.getOrPut(userId) { mutableMapOf() }
+        wallet[currency] = (wallet[currency] ?: 0.0) - amount
+    }
+
     fun credit(userId: String, currency: String, amount: Double) {
         val wallet = wallets.getOrPut(userId) { mutableMapOf() }
         wallet[currency] = (wallet[currency] ?: 0.0) + amount

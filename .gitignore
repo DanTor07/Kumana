@@ -38,3 +38,12 @@ lerna-debug.log*
 
 # Claude Code internal
 .claude/
+
+# Kotlin backend — build artifacts
+backend/.gradle/
+backend/build/
+backend/.idea/
+
+# Archivos temporales
+doc_temporal/
+kumana_mobile.zip

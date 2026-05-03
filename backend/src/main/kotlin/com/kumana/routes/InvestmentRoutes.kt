@@ -28,14 +28,7 @@ fun Application.configureInvestmentRoutes() {
             post("/exchange") {
                 val body = call.receive<ExchangeRequest>()
                 val investment = controller.exchange(body)
-                if (investment != null) {
-                    call.respond(investment)
-                } else {
-                    call.respond(
-                        HttpStatusCode.BadRequest,
-                        mapOf("error" to "Fondos insuficientes o usuario no encontrado")
-                    )
-                }
+                call.respond(investment)
             }
         }
     }

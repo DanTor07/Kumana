@@ -55,7 +55,7 @@ export function FinanceProvider({ children }) {
     setRatesError(null)
     try {
       const data = await financeService.getLatestRates()
-      if (data.result === 'success') {
+      if (data?.rates) {
         setState(prev => ({
           ...prev,
           rates: data.rates,
@@ -100,10 +100,14 @@ export function FinanceProvider({ children }) {
   }, [])
 
   const deposit = useCallback((currency, amount) => {
-    setState(prev => ({
-      ...prev,
-      wallet: { ...prev.wallet, [currency]: (prev.wallet[currency] || 0) + amount },
-    }))
+    setState(prev => {
+      const userId = prev.user.phone || 'guest'
+      financeService.depositWallet(userId, currency, amount).catch(() => {})
+      return {
+        ...prev,
+        wallet: { ...prev.wallet, [currency]: (prev.wallet[currency] || 0) + amount },
+      }
+    })
   }, [])
 
   // Retorna true si exitoso, false si fondos insuficientes
@@ -111,26 +115,30 @@ export function FinanceProvider({ children }) {
     const available = state.wallet[fromCurrency] || 0
     if (available < fromAmount) return false
 
-    setState(prev => ({
-      ...prev,
-      wallet: {
-        ...prev.wallet,
-        [fromCurrency]: (prev.wallet[fromCurrency] || 0) - fromAmount,
-        [toCurrency]: (prev.wallet[toCurrency] || 0) + toAmount,
-      },
-      investments: [
-        {
-          id: Date.now(),
-          fromCurrency,
-          toCurrency,
-          fromAmount,
-          toAmount,
-          rate,
-          date: new Date().toISOString(),
+    setState(prev => {
+      const userId = prev.user.phone || 'guest'
+      financeService.exchangeCurrency(userId, fromCurrency, toCurrency, fromAmount, toAmount, rate).catch(() => {})
+      return {
+        ...prev,
+        wallet: {
+          ...prev.wallet,
+          [fromCurrency]: (prev.wallet[fromCurrency] || 0) - fromAmount,
+          [toCurrency]: (prev.wallet[toCurrency] || 0) + toAmount,
         },
-        ...prev.investments,
-      ],
-    }))
+        investments: [
+          {
+            id: Date.now(),
+            fromCurrency,
+            toCurrency,
+            fromAmount,
+            toAmount,
+            rate,
+            date: new Date().toISOString(),
+          },
+          ...prev.investments,
+        ],
+      }
+    })
     return true
   }, [state.wallet])
 
