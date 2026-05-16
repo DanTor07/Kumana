@@ -30,6 +30,9 @@ dependencies {
     // Serialización JSON
     implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:2.3.7")
 
+    // Firebase Admin (Firestore)
+    implementation("com.google.firebase:firebase-admin:9.2.0")
+
     // Logging
     implementation("io.ktor:ktor-server-call-logging-jvm:2.3.7")
     implementation("ch.qos.logback:logback-classic:1.4.11")

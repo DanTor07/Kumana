@@ -44,6 +44,9 @@ backend/.gradle/
 backend/build/
 backend/.idea/
 
+# Firebase credentials
+backend/serviceAccountKey.json
+
 # Archivos temporales
 doc_temporal/
 kumana_mobile.zip

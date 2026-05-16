@@ -53,6 +53,6 @@ class AuthService {
             cedula = request.cedula,
             memberSince = LocalDate.now().format(formatter)
         )
-        return repo.update(request.userId, updated)
+        return repo.update(updated)
     }
 }
