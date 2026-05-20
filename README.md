@@ -19,12 +19,6 @@ El frontend consume exclusivamente el backend propio (`localhost:8080`), que act
 
 ---
 
-## Capturas de pantalla
-
-> _Agrega aquí imágenes o GIFs de la aplicación._
-
----
-
 ## Funcionalidades principales
 
 | Característica | Descripción |
@@ -159,6 +153,7 @@ kumana/
     ├── build.gradle.kts
     ├── settings.gradle.kts
     ├── gradlew.bat
+    ├── serviceAccountKey.json
     └── src/main/kotlin/com/kumana/
         ├── main.kt
         ├── config/
@@ -191,12 +186,35 @@ kumana/
 
 ---
 
+## Control de Versiones y Gestión de Ramas
+
+Para garantizar la integridad del código y conservar los hitos de desarrollo, el repositorio implementa una estrategia estructurada de ramas y tags:
+
+1. **Rama `main` (Código Base Frontend):** Contiene la estructura original de la aplicación desarrollada en **React Native** (móvil puro).
+2. **Tag de Conservación (`frontend-base-tag` o similar):** Creado sobre `main` para congelar y conservar de manera permanente esa versión limpia del frontend antes de realizar modificaciones estructurales.
+3. **Rama `android-kotlin` (Evolución y Backend en Kotlin):** Es la rama activa de desarrollo donde se integró la arquitectura cliente-servidor. Contiene la transformación completa del backend a **Kotlin (Ktor)**, la migración de las pantallas para consumir los nuevos endpoints dinámicos y la conexión a la base de datos de producción **Firebase Firestore**.
+
+---
+
+## Persistencia y Base de Datos (Cloud Firestore)
+
+La base de datos original en RAM ha sido completamente migrada a un esquema en la nube utilizando **Google Cloud Firestore** mediante el SDK de Firebase Admin en Kotlin.
+
+* **Mecanismo de Conexión:** El backend Kotlin se conecta de forma segura mediante un archivo de credenciales privadas llamado `serviceAccountKey.json` ubicado en la carpeta `backend/`. Este archivo está excluido explícitamente en el `.gitignore` por políticas de seguridad.
+
+### Colecciones de Datos en Firestore
+* `users` (Perfiles): Almacena información de perfil de los usuarios (teléfono, nombre, email, cédula y fecha de registro).
+* `wallets` (Saldos): Almacena los saldos de los usuarios por divisa (USD, EUR, COP, etc.).
+* `investments` (Transacciones): Almacena el historial de conversiones de divisas con tasas aplicadas y montos.
+
+---
+
 ## Requisitos previos
 
 ### Frontend
 - **Node.js** >= 18
 - **npm** >= 9
-- **Expo Go** — app instalada en tu dispositivo ([Android](https://play.google.com/store/apps/details?id=host.exp.exponent) / [iOS](https://apps.apple.com/app/expo-go/id982107779))
+- **Expo Go** — aplicación instalada en el dispositivo ([Android](https://play.google.com/store/apps/details?id=host.exp.exponent) / [iOS](https://apps.apple.com/app/expo-go/id982107779))
 
 ### Backend
 - **IntelliJ IDEA** (recomendado) — gestiona JDK y Gradle automáticamente
@@ -206,23 +224,26 @@ kumana/
 
 ## Instalación y uso
 
-### 1. Backend (iniciar primero)
+### 1. Levantar el servicio del Backend (iniciar primero)
+
+**🚨 Importante (Credenciales de Firebase):**
+Antes de iniciar el backend, es necesario descargar la clave privada de la cuenta de servicio de Firebase y guardarla en la carpeta `backend/` con el nombre exacto de **`serviceAccountKey.json`**. Sin este archivo, el servidor no podrá conectarse a Firestore.
 
 **Opción A — IntelliJ IDEA (recomendada):**
-1. File → Open → selecciona la carpeta `backend/`
-2. Espera que Gradle sincronice las dependencias
-3. Abre `main.kt` y haz clic en el ▶ junto a `fun main()`
+1. Seleccionar File → Open → carpeta `backend/`.
+2. Esperar a que Gradle sincronice las dependencias.
+3. Abrir `main.kt` y hacer clic en el botón ▶ junto a `fun main()`.
 
-**Opción B — terminal (requiere JDK 21):**
+**Opción B — Terminal (requiere JDK 21):**
 ```bash
 cd backend
-$env:JAVA_HOME = "ruta\a\tu\jdk"   # PowerShell
+$env:JAVA_HOME = "ruta\al\jdk"   # PowerShell
 .\gradlew.bat run
 ```
 
 El servidor queda disponible en `http://localhost:8080`.
 
-### 2. Frontend
+### 2. Levantar el servicio del Frontend
 
 ```bash
 # Instalar dependencias
@@ -232,7 +253,7 @@ npm install
 npm start
 ```
 
-Escanea el QR con **Expo Go** desde tu dispositivo o usa el simulador.
+Se debe escanear el QR generado con **Expo Go** desde un dispositivo móvil físico o utilizar un simulador.
 
 ```bash
 npm run android   # Emulador Android
@@ -245,10 +266,10 @@ npm run ios       # Simulador iOS (requiere macOS)
 
 ## Variables de entorno
 
-Crea un archivo `.env` en la raíz del proyecto:
+Se debe crear un archivo `.env` en la raíz del proyecto:
 
 ```env
-EXPO_PUBLIC_GEMINI_API_KEY=tu_clave_aqui
+EXPO_PUBLIC_GEMINI_API_KEY=clave_de_api_aqui
 ```
 
 > La clave se obtiene en [Google AI Studio](https://aistudio.google.com/). Sin ella, el módulo de asesor IA muestra un mensaje informativo y el resto de la app funciona con normalidad.
@@ -311,13 +332,13 @@ npm run web       # Inicia en navegador web
 
 ## Contribuciones
 
-Las contribuciones son bienvenidas. Por favor:
+Las contribuciones son bienvenidas. Se deben seguir los siguientes pasos:
 
-1. Haz fork del repositorio
-2. Crea una rama para tu feature (`git checkout -b feature/nueva-funcionalidad`)
-3. Realiza tus cambios y haz commit (`git commit -m 'feat: agrega nueva funcionalidad'`)
-4. Sube la rama (`git push origin feature/nueva-funcionalidad`)
-5. Abre un Pull Request
+1. Hacer fork del repositorio.
+2. Crear una rama para la funcionalidad (`git checkout -b feature/nueva-funcionalidad`).
+3. Realizar los cambios y hacer commit (`git commit -m 'feat: agrega nueva funcionalidad'`).
+4. Subir la rama (`git push origin feature/nueva-funcionalidad`).
+5. Abrir un Pull Request.
 
 ---
 
